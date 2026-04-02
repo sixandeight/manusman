@@ -1,10 +1,10 @@
-# Cluely — Onboarding Brief
+# Manusman — Onboarding Brief
 
 ## Setup
 
 ```
-git clone https://github.com/sixandeight/cluely.git
-cd cluely
+git clone https://github.com/sixandeight/manusman.git
+cd manusman
 npm install
 cp .env.example .env     ← fill in your KIMI_API_KEY and MANUS_API_KEY
 npm start

@@ -1,4 +1,4 @@
-# Cluely — Consulting Assistant Overlay
+# Manusman — Consulting Assistant Overlay
 
 ## What This Is
 
