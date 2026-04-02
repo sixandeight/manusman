@@ -44,6 +44,45 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
 
   const barRef = useRef<HTMLDivElement>(null)
 
+  // Mic capture — always-on rolling 30s buffer
+  const micChunksRef = useRef<Blob[]>([])
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+
+  useEffect(() => {
+    let recorder: MediaRecorder | null = null
+
+    const startMic = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+        recorder = new MediaRecorder(stream, { mimeType: "audio/webm;codecs=opus" })
+        mediaRecorderRef.current = recorder
+
+        recorder.ondataavailable = (e) => {
+          if (e.data.size > 0) {
+            micChunksRef.current.push(e.data)
+            // Keep only last 30s worth of chunks (at 250ms intervals = 120 chunks)
+            while (micChunksRef.current.length > 120) {
+              micChunksRef.current.shift()
+            }
+          }
+        }
+
+        recorder.start(250) // chunk every 250ms
+        console.log("[Mic] Recording started — 30s rolling buffer")
+      } catch (err) {
+        console.warn("[Mic] Could not start microphone:", err)
+      }
+    }
+
+    startMic()
+
+    return () => {
+      if (recorder && recorder.state !== "inactive") {
+        recorder.stop()
+      }
+    }
+  }, [])
+
   const { data: screenshots = [], refetch } = useQuery<Array<{ path: string; preview: string }>, Error>(
     ["screenshots"],
     async () => {
@@ -387,8 +426,21 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
         toolResults={toolResults}
         runningTools={runningTools}
         activeToolPrompt={activeToolPrompt}
-        onToolSubmit={(toolName, args, screenshotPath) => {
-          window.electronAPI.runManusTool(toolName, args, screenshotPath)
+        onToolSubmit={async (toolName, args, screenshotPath) => {
+          // Grab mic buffer and transcribe before sending tool request
+          let transcript = ""
+          if (micChunksRef.current.length > 0) {
+            try {
+              const blob = new Blob(micChunksRef.current, { type: "audio/webm" })
+              const arrayBuffer = await blob.arrayBuffer()
+              transcript = await window.electronAPI.transcribeAudioBuffer(arrayBuffer, "audio/webm")
+            } catch (err) {
+              console.warn("[Mic] Transcription failed, proceeding without:", err)
+            }
+          }
+
+          // Send tool request — transcript goes via args
+          window.electronAPI.runManusTool(toolName, { ...args, _transcript: transcript }, screenshotPath)
         }}
         onToolCancel={() => setActiveToolPrompt(null)}
         onDismissResult={(i) => setToolResults(prev => prev.filter((_, j) => j !== i))}

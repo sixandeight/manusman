@@ -235,6 +235,16 @@ export class ProcessingHelper {
     }
     const prompt = promptBuilder(args)
 
+    // Extract and inject transcript if provided
+    const transcript = args._transcript || ""
+    delete args._transcript  // clean up internal field
+
+    let fullPrompt = prompt
+    if (transcript) {
+      fullPrompt += `\n\nLIVE CONTEXT (last 30 seconds of user's microphone):\n"""\n${transcript}\n"""\nUse this context to inform your response. The user is currently in a live conversation.`
+      console.log(`[ProcessingHelper] Injected ${transcript.length} chars of transcript`)
+    }
+
     // Build attachments if screenshot provided
     let attachments: Array<{ filename: string; fileData: string }> | undefined
     if (screenshotPath) {
@@ -250,7 +260,7 @@ export class ProcessingHelper {
     }
 
     console.log(`[ProcessingHelper] Running Manus tool: ${toolName}`, JSON.stringify(args))
-    console.log(`[ProcessingHelper] Prompt: ${prompt.substring(0, 200)}...`)
+    console.log(`[ProcessingHelper] Prompt: ${fullPrompt.substring(0, 200)}...`)
 
     // Notify renderer that a tool is running
     if (mainWindow) {
@@ -260,7 +270,7 @@ export class ProcessingHelper {
     try {
       const result = await this.manusHelper.runTool(
         toolName,
-        prompt,
+        fullPrompt,
         attachments,
         (status) => {
           console.log(`[ProcessingHelper] Manus ${toolName} status: ${status}`)
