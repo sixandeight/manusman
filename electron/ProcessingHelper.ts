@@ -14,35 +14,45 @@ const isDevTest = process.env.IS_DEV_TEST === "true"
 const MOCK_API_WAIT_TIME = Number(process.env.MOCK_API_WAIT_TIME) || 500
 
 // System instructions prepended to every Manus prompt
-const MANUS_SYSTEM = `RULES:
-- Do NOT ask clarifying questions. Do NOT wait for user input.
-- If Notion or Google Drive connectors are not available, skip them silently and use web research instead. Do NOT mention missing connectors. Do NOT apologize. Just use the web.
-- Be concise. No filler. No disclaimers.
+const MANUS_SYSTEM = `CRITICAL RULES:
+1. Do NOT ask clarifying questions. Do NOT wait for user input. Just do the task.
+2. If Notion or Google Drive connectors are not available, skip them silently. Use web research instead. Do NOT mention missing connectors.
+3. Be concise. No filler. No disclaimers. No preamble.
+4. MANDATORY OUTPUT FORMAT: Your FINAL message must contain ONLY a JSON object wrapped in \`\`\`json code fences. NO prose before or after. NO explanations. NO "here is your result". JUST the JSON block. If your final message contains ANY text outside the code fence, you have FAILED the task.`
 
-OUTPUT: You have display skills installed. Use the one specified in the task. Your FINAL message must be ONLY the JSON from the skill schema wrapped in \`\`\`json code fences. No other text in your final message.`
+// JSON schemas embedded in prompts so Manus knows exact format
+const SCHEMAS = {
+  checklist: `{ "display": "checklist", "title": "string", "subtitle": "string (optional)", "context": [{ "text": "string", "priority": "high|medium|low" }], "items": [{ "text": "string", "checked": false }], "notes": "string (optional)" }`,
+  profile: `{ "display": "profile", "name": "string", "role": "string", "company": "string", "details": ["string"], "deal_stage": "lead|qualified|proposal|negotiation|closed_won (optional)", "deal_value": "string (optional)", "last_contact": "string (optional)", "sentiment": "positive|negative|neutral", "summary": "string", "actions": ["string"] }`,
+  verdict: `{ "display": "verdict", "claim": "string", "verdict": "true|false|partially_true|unverifiable", "confidence": "high|medium|low", "evidence": "string", "source": "string (optional)", "context": "string (optional)" }`,
+  stat_card: `{ "display": "stat_card", "value": "string (the main number/stat)", "label": "string", "unit": "string (optional)", "trend": [number] (optional array of recent values), "sentiment": "positive|negative|neutral", "source": "string (optional)", "context": "string (optional)" }`,
+  comparison: `{ "display": "comparison", "us_name": "string", "them_name": "string", "metrics": [{ "label": "string", "us_score": number (1-10), "them_score": number (1-10), "us_note": "string (optional)", "them_note": "string (optional)" }], "verdict": "string", "actions": ["string"] }`,
+  pipeline: `{ "display": "pipeline", "client": "string", "stages": ["string", "string", ...], "current_stage": number (0-indexed), "deal_value": "string (optional)", "risk": "low|medium|high", "next_action": "string", "next_action_due": "string (optional)", "blockers": ["string"], "summary": "string (optional)" }`,
+  chart: `{ "display": "chart", "chart_type": "bar|donut", "title": "string", "datasets": [{ "name": "string", "values": [number], "labels": ["string"] (for donut), "color": "blue|green|red|orange|purple|cyan", "colors": ["color"] (for donut) }], "labels": ["string"] (x-axis labels for bar), "summary": "string (optional)" }`,
+}
 
-// Prompt templates for each Manus tool — each references a specific display skill
+// Prompt templates for each Manus tool
 const TOOL_PROMPTS: Record<string, (args: Record<string, string>) => string> = {
   who_is_this: (args) =>
-    `${MANUS_SYSTEM}\n\nTASK: Look up this person. Search Notion connector and the web for: name, company, role, past interactions, deal stage.\n\nUse /display-profile to format your answer.\n\nContext: ${args.context || "See attached screenshot"}${args.name ? `\nName: ${args.name}` : ""}${args.company ? `\nCompany: ${args.company}` : ""}`,
+    `${MANUS_SYSTEM}\n\nTASK: Look up this person. Search the web for: name, company, role, recent activity.\n\nOUTPUT SCHEMA (use EXACTLY this format):\n${SCHEMAS.profile}\n\nContext: ${args.context || "See attached screenshot"}${args.name ? `\nName: ${args.name}` : ""}${args.company ? `\nCompany: ${args.company}` : ""}`,
 
   meeting_brief: (args) =>
-    `${MANUS_SYSTEM}\n\nTASK: Prepare a meeting brief for: ${args.person_or_company}\n\nUse Notion connector for: last meeting notes, open action items, relationship history. Use Google Drive connector for recent shared documents.\n\nUse /display-checklist to format your answer.${args.meeting_topic ? `\nMeeting topic: ${args.meeting_topic}` : ""}`,
+    `${MANUS_SYSTEM}\n\nTASK: Prepare a meeting brief for: ${args.person_or_company}. Research them on the web. Find: recent news, key facts, talking points, potential topics.\n\nOUTPUT SCHEMA (use EXACTLY this format):\n${SCHEMAS.checklist}\n\nThe "context" array should contain key facts with priority. The "items" array should contain talking points/action items.${args.meeting_topic ? `\nMeeting topic: ${args.meeting_topic}` : ""}`,
 
   live_fact_check: (args) =>
-    `${MANUS_SYSTEM}\n\nTASK: Fact-check this claim using Google Drive connector, Notion connector, and the web.\n\nUse /display-verdict to format your answer.\n\nClaim: ${args.claim}${args.source_context ? `\nSource: ${args.source_context}` : ""}`,
+    `${MANUS_SYSTEM}\n\nTASK: Fact-check this claim using the web. Find supporting or contradicting evidence.\n\nOUTPUT SCHEMA (use EXACTLY this format):\n${SCHEMAS.verdict}\n\nClaim: ${args.claim}${args.source_context ? `\nSource: ${args.source_context}` : ""}`,
 
   company_snapshot: (args) =>
-    `${MANUS_SYSTEM}\n\nTASK: Research "${args.company_name}". Find: type, founded, size, funding, industry, key people, recent news. Check Notion connector for past interactions.\n\nUse /display-stat-card if the answer is primarily one key metric, or /display-comparison if comparing, otherwise use /display-chart if there is meaningful trend data, or /display-stat-card as default.${args.specific_focus ? `\nFocus on: ${args.specific_focus}` : ""}`,
+    `${MANUS_SYSTEM}\n\nTASK: Research "${args.company_name}". Find: founding year, size, funding/valuation, industry, key metrics, recent news.\n\nOUTPUT SCHEMA — choose ONE based on the data:\nFor a key metric: ${SCHEMAS.stat_card}\nFor trend data over time: ${SCHEMAS.chart}\nUse chart with chart_type "bar" if you have values over time. Include "labels" for x-axis (e.g. years) and "datasets" with "values" array matching the labels.\n\nDefault to stat_card if unsure.${args.specific_focus ? `\nFocus on: ${args.specific_focus}` : ""}`,
 
   deal_status: (args) =>
-    `${MANUS_SYSTEM}\n\nTASK: Check deal status for "${args.client_name}" using Notion connector. Find: pipeline stage, last interaction, blockers, next actions, deal value.\n\nUse /display-pipeline to format your answer.`,
+    `${MANUS_SYSTEM}\n\nTASK: Research "${args.client_name}" and construct a plausible deal pipeline based on public information. Find: what stage the relationship might be at, recent interactions/news, potential blockers.\n\nOUTPUT SCHEMA (use EXACTLY this format):\n${SCHEMAS.pipeline}\n\nThe "stages" array should be e.g. ["Prospecting", "Qualified", "Proposal", "Negotiation", "Closed"]. Set "current_stage" to the 0-indexed position.`,
 
   competitive_intel: (args) =>
-    `${MANUS_SYSTEM}\n\nTASK: Competitive intel on "${args.competitor_name}". Check Google Drive connector and Notion connector for past comparisons. Search web for latest positioning.\n\nUse /display-comparison to format your answer.${args.comparison_context ? `\nFocus: ${args.comparison_context}` : ""}${args.our_product ? `\nOur product: ${args.our_product}` : ""}`,
+    `${MANUS_SYSTEM}\n\nTASK: Competitive intel on "${args.competitor_name}". Search web for: market position, strengths, weaknesses, pricing, recent moves.\n\nOUTPUT SCHEMA (use EXACTLY this format):\n${SCHEMAS.comparison}\n\n"us_name" should be "Us" and "them_name" should be "${args.competitor_name}". Each metric has us_score and them_score from 1-10. Include at least 4 metrics.${args.comparison_context ? `\nFocus: ${args.comparison_context}` : ""}${args.our_product ? `\nOur product: ${args.our_product}` : ""}`,
 
   number_lookup: (args) =>
-    `${MANUS_SYSTEM}\n\nTASK: Find this number/stat using Google Drive connector and Notion connector: "${args.query}"\n\nUse /display-stat-card to format your answer. If there is trend data over time, include it in the trend array.${args.time_period ? `\nTime period: ${args.time_period}` : ""}${args.source_hint ? `\nLook in: ${args.source_hint}` : ""}`,
+    `${MANUS_SYSTEM}\n\nTASK: Find this number/stat: "${args.query}". Search the web.\n\nOUTPUT SCHEMA (use EXACTLY this format):\n${SCHEMAS.stat_card}\n\nIf there is trend data over time, include it in the "trend" array (recent values as numbers). "value" should be the main headline number as a string.${args.time_period ? `\nTime period: ${args.time_period}` : ""}${args.source_hint ? `\nLook in: ${args.source_hint}` : ""}`,
 }
 
 export type ManusToolName = "who_is_this" | "meeting_brief" | "live_fact_check" | "company_snapshot" | "deal_status" | "competitive_intel" | "number_lookup"
