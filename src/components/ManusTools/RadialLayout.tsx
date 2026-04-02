@@ -325,6 +325,8 @@ const RadialLayout: React.FC<Props> = ({
   useEffect(() => {
     if (toolResults.length === 0) return
 
+    console.log(`[RadialLayout] Processing ${toolResults.length} results, cards: ${cards.size}, queues:`, Object.fromEntries(queues.current))
+
     setCards(prev => {
       const next = new Map(prev)
       let changed = false
@@ -337,6 +339,7 @@ const RadialLayout: React.FC<Props> = ({
 
         const q = queues.current.get(result.toolName)
         const cardId = q?.shift()
+        console.log(`[RadialLayout] Result for "${result.toolName}" → queue:`, q, `cardId:`, cardId, `cardExists:`, cardId ? next.has(cardId) : false)
         if (cardId && next.has(cardId)) {
           const card = next.get(cardId)!
           const parsed = parseResultJSON(result.text)
@@ -369,6 +372,7 @@ const RadialLayout: React.FC<Props> = ({
     const q = queues.current.get(toolName) || []
     q.push(cardId)
     queues.current.set(toolName, q)
+    console.log(`[RadialLayout] Submit: ${toolName} → cardId: ${cardId}, queue now:`, [...q])
     setCards(prev => { const n = new Map(prev); const c = n.get(cardId); if (c) n.set(cardId, { ...c, phase: "pending" }); return n })
     onToolSubmit(toolName, args, screenshot)
   }, [onToolSubmit])
