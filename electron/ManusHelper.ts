@@ -1,0 +1,228 @@
+import dotenv from "dotenv"
+
+dotenv.config()
+
+interface ManusTaskResponse {
+  taskId: string
+  taskUrl: string
+}
+
+interface ManusTaskStatus {
+  id: string
+  object: string
+  created_at: number
+  updated_at: number
+  status: "pending" | "running" | "completed" | "failed" | "error"
+  error: string | null
+  model: string
+  metadata: Record<string, any>
+  output: ManusMessage[]
+  credit_usage: number | null
+}
+
+interface ManusMessage {
+  id: string
+  status?: string
+  role: "user" | "assistant"
+  type?: string
+  content: ManusContentBlock[]
+}
+
+interface ManusContentBlock {
+  type: "output_text" | "text" | "output_file" | "input_text"
+  text?: string
+  fileUrl?: string | null
+  fileName?: string | null
+  mimeType?: string | null
+}
+
+export interface ManusResult {
+  taskId: string
+  taskUrl: string
+  status: "pending" | "running" | "completed" | "failed" | "error"
+  text: string
+  files: Array<{ url: string; name: string; mimeType: string }>
+  raw: ManusTaskStatus | null
+}
+
+export class ManusHelper {
+  private apiKey: string
+  private baseUrl: string = "https://api.manus.ai"
+  private pollIntervalMs: number = 3000
+  private maxPollAttempts: number = 120 // 6 minutes max
+
+  constructor(apiKey?: string) {
+    this.apiKey = apiKey || process.env.MANUS_API_KEY || ""
+    if (!this.apiKey) {
+      console.warn("[ManusHelper] No MANUS_API_KEY found — Manus tools will not work")
+    }
+  }
+
+  public isConfigured(): boolean {
+    return this.apiKey.length > 0
+  }
+
+  public async createTask(
+    prompt: string,
+    attachments?: Array<{ filename: string; fileData?: string; url?: string; mimeType?: string }>,
+    options?: { taskMode?: string; connectors?: string[]; agentProfile?: string }
+  ): Promise<ManusTaskResponse> {
+    const body: Record<string, any> = {
+      prompt,
+      mode: options?.agentProfile || "speed",
+    }
+
+    if (attachments && attachments.length > 0) {
+      body.attachments = attachments
+    }
+
+    if (options?.connectors) {
+      body.connectors = options.connectors
+    }
+
+    if (options?.taskMode) {
+      body.taskMode = options.taskMode
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/v1/tasks`, {
+        method: "POST",
+        headers: {
+          "accept": "application/json",
+          "content-type": "application/json",
+          "API_KEY": this.apiKey,
+        },
+        body: JSON.stringify(body),
+      })
+
+      if (!response.ok) {
+        const errorBody = await response.text()
+        throw new Error(`Manus API error: ${response.status} - ${errorBody}`)
+      }
+
+      const data = await response.json()
+      console.log(`[ManusHelper] Task created: ${data.taskId}`)
+      return { taskId: data.taskId, taskUrl: data.taskUrl }
+    } catch (error) {
+      console.error("[ManusHelper] Error creating task:", error)
+      throw error
+    }
+  }
+
+  public async getTaskStatus(taskId: string): Promise<ManusTaskStatus> {
+    const response = await fetch(`${this.baseUrl}/v1/tasks/${taskId}`, {
+      method: "GET",
+      headers: {
+        "accept": "application/json",
+        "API_KEY": this.apiKey,
+      },
+    })
+
+    if (!response.ok) {
+      const errorBody = await response.text()
+      throw new Error(`Manus status error: ${response.status} - ${errorBody}`)
+    }
+
+    return await response.json()
+  }
+
+  public async pollUntilComplete(
+    taskId: string,
+    onStatusUpdate?: (status: string) => void
+  ): Promise<ManusResult> {
+    let attempts = 0
+
+    while (attempts < this.maxPollAttempts) {
+      attempts++
+
+      try {
+        const status = await this.getTaskStatus(taskId)
+
+        if (onStatusUpdate) {
+          onStatusUpdate(status.status)
+        }
+
+        if (status.status === "completed") {
+          return this.parseTaskResult(taskId, status)
+        }
+
+        if (status.status === "failed" || status.status === "error") {
+          return {
+            taskId,
+            taskUrl: status.metadata?.task_url || "",
+            status: status.status,
+            text: status.error || "Task failed",
+            files: [],
+            raw: status,
+          }
+        }
+
+        // Still running/pending — wait and poll again
+        await this.sleep(this.pollIntervalMs)
+      } catch (error) {
+        console.error(`[ManusHelper] Poll attempt ${attempts} failed:`, error)
+        if (attempts >= this.maxPollAttempts) throw error
+        await this.sleep(this.pollIntervalMs)
+      }
+    }
+
+    throw new Error(`Manus task ${taskId} timed out after ${this.maxPollAttempts} attempts`)
+  }
+
+  /**
+   * Run a tool: create task + poll until done. Returns parsed result.
+   * Multiple calls to this can run in parallel via Promise.all.
+   */
+  public async runTool(
+    toolName: string,
+    prompt: string,
+    attachments?: Array<{ filename: string; fileData?: string; url?: string; mimeType?: string }>,
+    onStatusUpdate?: (status: string) => void
+  ): Promise<ManusResult & { toolName: string }> {
+    console.log(`[ManusHelper] Running tool: ${toolName}`)
+
+    const { taskId, taskUrl } = await this.createTask(prompt, attachments, {
+      taskMode: "agent",
+      agentProfile: "speed",
+    })
+
+    const result = await this.pollUntilComplete(taskId, onStatusUpdate)
+    return { ...result, taskUrl, toolName }
+  }
+
+  private parseTaskResult(taskId: string, status: ManusTaskStatus): ManusResult {
+    const textParts: string[] = []
+    const files: Array<{ url: string; name: string; mimeType: string }> = []
+
+    if (status.output) {
+      for (const message of status.output) {
+        if (message.role !== "assistant") continue
+        for (const block of message.content) {
+          if ((block.type === "output_text" || block.type === "text") && block.text) {
+            textParts.push(block.text)
+          }
+          if (block.type === "output_file" && block.fileUrl) {
+            files.push({
+              url: block.fileUrl,
+              name: block.fileName || "file",
+              mimeType: block.mimeType || "application/octet-stream",
+            })
+          }
+        }
+      }
+    }
+
+    return {
+      taskId,
+      taskUrl: status.metadata?.task_url || "",
+      status: "completed",
+      text: textParts.join("\n\n"),
+      files,
+      raw: status,
+    }
+  }
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms))
+  }
+}

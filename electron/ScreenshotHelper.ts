@@ -27,12 +27,8 @@ export class ScreenshotHelper {
     )
 
     // Create directories if they don't exist
-    if (!fs.existsSync(this.screenshotDir)) {
-      fs.mkdirSync(this.screenshotDir)
-    }
-    if (!fs.existsSync(this.extraScreenshotDir)) {
-      fs.mkdirSync(this.extraScreenshotDir)
-    }
+    fs.mkdirSync(this.screenshotDir, { recursive: true })
+    fs.mkdirSync(this.extraScreenshotDir, { recursive: true })
   }
 
   public getView(): "queue" | "solutions" {

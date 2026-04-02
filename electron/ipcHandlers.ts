@@ -138,6 +138,14 @@ export function initializeIpcHandlers(appState: AppState): void {
     appState.centerAndShowWindow()
   })
 
+  // Click-through toggling — renderer calls this on mouseenter/mouseleave of interactive areas
+  ipcMain.handle("set-ignore-mouse", async (_, ignore: boolean) => {
+    const win = appState.getMainWindow()
+    if (win && !win.isDestroyed()) {
+      win.setIgnoreMouseEvents(ignore, { forward: true })
+    }
+  })
+
   // LLM Model Management Handlers
   ipcMain.handle("get-current-llm-config", async () => {
     try {
@@ -185,6 +193,26 @@ export function initializeIpcHandlers(appState: AppState): void {
       return { success: false, error: error.message };
     }
   });
+
+  // ── Manus Tool Handlers ──────────────────────────────────
+  ipcMain.handle("run-manus-tool", async (_, toolName: string, args: Record<string, string>, screenshotPath?: string) => {
+    try {
+      const result = await appState.processingHelper.runManusTool(
+        toolName as any,
+        args,
+        screenshotPath
+      )
+      return result
+    } catch (error: any) {
+      console.error(`Error running Manus tool ${toolName}:`, error)
+      throw error
+    }
+  })
+
+  ipcMain.handle("get-last-screenshot-path", async () => {
+    const queue = appState.getScreenshotQueue()
+    return queue.length > 0 ? queue[queue.length - 1] : null
+  })
 
   ipcMain.handle("test-llm-connection", async () => {
     try {

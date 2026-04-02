@@ -56,6 +56,18 @@ declare global {
       switchToGemini: (apiKey?: string) => Promise<{ success: boolean; error?: string }>
       testLlmConnection: () => Promise<{ success: boolean; error?: string }>
       
+      // Click-through
+      setIgnoreMouse: (ignore: boolean) => Promise<void>
+
+      // Manus Tools
+      runManusTool: (toolName: string, args: Record<string, string>, screenshotPath?: string) => Promise<any>
+      getLastScreenshotPath: () => Promise<string | null>
+      onManusToolPrompt: (callback: (data: { toolName: string; needsScreenshot: boolean }) => void) => () => void
+      onManusToolStarted: (callback: (data: { toolName: string; args: Record<string, string> }) => void) => () => void
+      onManusToolStatus: (callback: (data: { toolName: string; status: string }) => void) => () => void
+      onManusToolResult: (callback: (data: any) => void) => () => void
+      onManusToolError: (callback: (data: { toolName: string; error: string }) => void) => () => void
+
       invoke: (channel: string, ...args: any[]) => Promise<any>
     }
   }
@@ -164,7 +176,16 @@ const App: React.FC = () => {
   }, [])
 
   return (
-    <div ref={containerRef} className="min-h-0">
+    <div
+      ref={containerRef}
+      style={{
+        width: "100vw",
+        height: "100vh",
+        background: "transparent",
+        overflow: "hidden",
+        pointerEvents: "none",
+      }}
+    >
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
           {view === "queue" ? (

@@ -28,40 +28,8 @@ export class WindowHelper {
   }
 
   public setWindowDimensions(width: number, height: number): void {
-    if (!this.mainWindow || this.mainWindow.isDestroyed()) return
-
-    // Get current window position
-    const [currentX, currentY] = this.mainWindow.getPosition()
-
-    // Get screen dimensions
-    const primaryDisplay = screen.getPrimaryDisplay()
-    const workArea = primaryDisplay.workAreaSize
-
-    // Use 75% width if debugging has occurred, otherwise use 60%
-    const maxAllowedWidth = Math.floor(
-      workArea.width * (this.appState.getHasDebugged() ? 0.75 : 0.5)
-    )
-
-    // Ensure width doesn't exceed max allowed width and height is reasonable
-    const newWidth = Math.min(width + 32, maxAllowedWidth)
-    const newHeight = Math.ceil(height)
-
-    // Center the window horizontally if it would go off screen
-    const maxX = workArea.width - newWidth
-    const newX = Math.min(Math.max(currentX, 0), maxX)
-
-    // Update window bounds
-    this.mainWindow.setBounds({
-      x: newX,
-      y: currentY,
-      width: newWidth,
-      height: newHeight
-    })
-
-    // Update internal state
-    this.windowPosition = { x: newX, y: currentY }
-    this.windowSize = { width: newWidth, height: newHeight }
-    this.currentX = newX
+    // Fullscreen overlay — don't resize, window stays screen-sized
+    return
   }
 
   public createWindow(): void {
@@ -74,16 +42,16 @@ export class WindowHelper {
 
     
     const windowSettings: Electron.BrowserWindowConstructorOptions = {
-      width: 400,
-      height: 600,
-      minWidth: 300,
-      minHeight: 200,
+      width: workArea.width,
+      height: workArea.height,
+      x: 0,
+      y: 0,
       webPreferences: {
         nodeIntegration: true,
         contextIsolation: true,
         preload: path.join(__dirname, "preload.js")
       },
-      show: false, // Start hidden, then show after setup
+      show: false,
       alwaysOnTop: true,
       frame: false,
       transparent: true,
@@ -91,15 +59,16 @@ export class WindowHelper {
       hasShadow: false,
       backgroundColor: "#00000000",
       focusable: true,
-      resizable: true,
-      movable: true,
-      x: 100, // Start at a visible position
-      y: 100
+      resizable: false,
+      movable: false,
     }
 
     this.mainWindow = new BrowserWindow(windowSettings)
     // this.mainWindow.webContents.openDevTools()
     this.mainWindow.setContentProtection(true)
+
+    // Click-through: transparent areas pass clicks to apps underneath
+    this.mainWindow.setIgnoreMouseEvents(true, { forward: true })
 
     if (process.platform === "darwin") {
       this.mainWindow.setVisibleOnAllWorkspaces(true, {
@@ -199,17 +168,17 @@ export class WindowHelper {
       return
     }
 
-    if (this.windowPosition && this.windowSize) {
-      this.mainWindow.setBounds({
-        x: this.windowPosition.x,
-        y: this.windowPosition.y,
-        width: this.windowSize.width,
-        height: this.windowSize.height
-      })
-    }
+    // Always restore to fullscreen position
+    const primaryDisplay = screen.getPrimaryDisplay()
+    const workArea = primaryDisplay.workAreaSize
+    this.mainWindow.setBounds({
+      x: 0, y: 0,
+      width: workArea.width,
+      height: workArea.height,
+    })
 
     this.mainWindow.showInactive()
-
+    this.mainWindow.setIgnoreMouseEvents(true, { forward: true })
     this.isWindowVisible = true
   }
 
@@ -222,35 +191,21 @@ export class WindowHelper {
   }
 
   private centerWindow(): void {
-    if (!this.mainWindow || this.mainWindow.isDestroyed()) {
-      return
-    }
+    if (!this.mainWindow || this.mainWindow.isDestroyed()) return
 
     const primaryDisplay = screen.getPrimaryDisplay()
     const workArea = primaryDisplay.workAreaSize
-    
-    // Get current window size or use defaults
-    const windowBounds = this.mainWindow.getBounds()
-    const windowWidth = windowBounds.width || 400
-    const windowHeight = windowBounds.height || 600
-    
-    // Calculate center position
-    const centerX = Math.floor((workArea.width - windowWidth) / 2)
-    const centerY = Math.floor((workArea.height - windowHeight) / 2)
-    
-    // Set window position
+
     this.mainWindow.setBounds({
-      x: centerX,
-      y: centerY,
-      width: windowWidth,
-      height: windowHeight
+      x: 0, y: 0,
+      width: workArea.width,
+      height: workArea.height,
     })
-    
-    // Update internal state
-    this.windowPosition = { x: centerX, y: centerY }
-    this.windowSize = { width: windowWidth, height: windowHeight }
-    this.currentX = centerX
-    this.currentY = centerY
+
+    this.windowPosition = { x: 0, y: 0 }
+    this.windowSize = { width: workArea.width, height: workArea.height }
+    this.currentX = 0
+    this.currentY = 0
   }
 
   public centerAndShowWindow(): void {

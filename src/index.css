@@ -2,6 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Fullscreen transparent overlay — clicks pass through by default */
+html, body, #root {
+  background: transparent !important;
+  overflow: hidden;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+/* Interactive areas re-enable pointer events */
+.interactive-zone {
+  pointer-events: auto;
+}
+
 /* Liquid Glass Effect Base */
 .liquid-glass {
   background: rgba(255, 255, 255, 0.25);

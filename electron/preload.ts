@@ -42,6 +42,18 @@ interface ElectronAPI {
   switchToGemini: (apiKey?: string) => Promise<{ success: boolean; error?: string }>
   testLlmConnection: () => Promise<{ success: boolean; error?: string }>
   
+  // Click-through
+  setIgnoreMouse: (ignore: boolean) => Promise<void>
+
+  // Manus Tools
+  runManusTool: (toolName: string, args: Record<string, string>, screenshotPath?: string) => Promise<any>
+  getLastScreenshotPath: () => Promise<string | null>
+  onManusToolPrompt: (callback: (data: { toolName: string; needsScreenshot: boolean }) => void) => () => void
+  onManusToolStarted: (callback: (data: { toolName: string; args: Record<string, string> }) => void) => () => void
+  onManusToolStatus: (callback: (data: { toolName: string; status: string }) => void) => () => void
+  onManusToolResult: (callback: (data: any) => void) => () => void
+  onManusToolError: (callback: (data: { toolName: string; error: string }) => void) => () => void
+
   invoke: (channel: string, ...args: any[]) => Promise<any>
 }
 
@@ -187,5 +199,38 @@ contextBridge.exposeInMainWorld("electronAPI", {
   switchToGemini: (apiKey?: string) => ipcRenderer.invoke("switch-to-gemini", apiKey),
   testLlmConnection: () => ipcRenderer.invoke("test-llm-connection"),
   
+  // Click-through
+  setIgnoreMouse: (ignore: boolean) => ipcRenderer.invoke("set-ignore-mouse", ignore),
+
+  // Manus Tools
+  runManusTool: (toolName: string, args: Record<string, string>, screenshotPath?: string) =>
+    ipcRenderer.invoke("run-manus-tool", toolName, args, screenshotPath),
+  getLastScreenshotPath: () => ipcRenderer.invoke("get-last-screenshot-path"),
+  onManusToolPrompt: (callback: (data: { toolName: string; needsScreenshot: boolean }) => void) => {
+    const sub = (_: any, data: any) => callback(data)
+    ipcRenderer.on("manus-tool-prompt", sub)
+    return () => { ipcRenderer.removeListener("manus-tool-prompt", sub) }
+  },
+  onManusToolStarted: (callback: (data: { toolName: string; args: Record<string, string> }) => void) => {
+    const sub = (_: any, data: any) => callback(data)
+    ipcRenderer.on("manus-tool-started", sub)
+    return () => { ipcRenderer.removeListener("manus-tool-started", sub) }
+  },
+  onManusToolStatus: (callback: (data: { toolName: string; status: string }) => void) => {
+    const sub = (_: any, data: any) => callback(data)
+    ipcRenderer.on("manus-tool-status", sub)
+    return () => { ipcRenderer.removeListener("manus-tool-status", sub) }
+  },
+  onManusToolResult: (callback: (data: any) => void) => {
+    const sub = (_: any, data: any) => callback(data)
+    ipcRenderer.on("manus-tool-result", sub)
+    return () => { ipcRenderer.removeListener("manus-tool-result", sub) }
+  },
+  onManusToolError: (callback: (data: { toolName: string; error: string }) => void) => {
+    const sub = (_: any, data: any) => callback(data)
+    ipcRenderer.on("manus-tool-error", sub)
+    return () => { ipcRenderer.removeListener("manus-tool-error", sub) }
+  },
+
   invoke: (channel: string, ...args: any[]) => ipcRenderer.invoke(channel, ...args)
 } as ElectronAPI)
