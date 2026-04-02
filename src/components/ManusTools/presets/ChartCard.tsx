@@ -52,17 +52,17 @@ const BarChart: React.FC<{ data: ChartData }> = ({ data }) => {
         const annotation = data.annotations?.find(a => a.index === i)
         return (
           <div key={i} className="flex items-center gap-2">
-            <span className="text-[10px] text-white/40 w-12 text-right shrink-0 truncate">{labels[i]}</span>
-            <div className="flex-1 h-4 rounded bg-white/5 overflow-hidden relative">
+            <span className="text-[10px] text-gray-400 w-12 text-right shrink-0 truncate">{labels[i]}</span>
+            <div className="flex-1 h-4 rounded bg-gray-50 overflow-hidden relative">
               <div
                 className="h-full rounded transition-all duration-500"
                 style={{ width: `${pct}%`, background: color }}
               />
               {annotation && (
-                <span className="absolute right-1 top-0 text-[9px] text-white/50 leading-4">{annotation.text}</span>
+                <span className="absolute right-1 top-0 text-[9px] text-gray-400 leading-4">{annotation.text}</span>
               )}
             </div>
-            <span className="text-[10px] text-white/50 w-16 shrink-0 font-mono">
+            <span className="text-[10px] text-gray-400 w-16 shrink-0 font-mono">
               {typeof v === "number" && v >= 1000000 ? `${(v / 1000000).toFixed(1)}M` :
                typeof v === "number" && v >= 1000 ? `${(v / 1000).toFixed(0)}K` : v}
             </span>
@@ -104,8 +104,8 @@ const DonutChart: React.FC<{ data: ChartData }> = ({ data }) => {
         {ds.values.map((v, i) => (
           <div key={i} className="flex items-center gap-2 text-xs">
             <span className="w-2 h-2 rounded-full shrink-0" style={{ background: colors[i] }} />
-            <span className="text-white/50">{labels[i]}</span>
-            <span className="text-white/70 font-mono">{Math.round((v / total) * 100)}%</span>
+            <span className="text-gray-400">{labels[i]}</span>
+            <span className="text-gray-600 font-mono">{Math.round((v / total) * 100)}%</span>
           </div>
         ))}
       </div>
@@ -117,7 +117,7 @@ const ChartCard: React.FC<{ data: ChartData }> = ({ data }) => {
   return (
     <div className="space-y-3">
       {/* Title */}
-      <div className="text-sm font-medium text-white/80">{data.title}</div>
+      <div className="text-sm font-medium text-gray-700">{data.title}</div>
 
       {/* Chart */}
       {(data.chart_type === "bar" || data.chart_type === "line" || data.chart_type === "horizontal_bar") && (
@@ -128,11 +128,11 @@ const ChartCard: React.FC<{ data: ChartData }> = ({ data }) => {
       )}
 
       {/* Summary */}
-      <div className="text-xs text-white/60 leading-relaxed">{data.summary}</div>
+      <div className="text-xs text-gray-500 leading-relaxed">{data.summary}</div>
 
       {/* Source */}
       {data.source && (
-        <div className="text-[10px] text-white/30">Source: {data.source}</div>
+        <div className="text-[10px] text-gray-300">Source: {data.source}</div>
       )}
     </div>
   )

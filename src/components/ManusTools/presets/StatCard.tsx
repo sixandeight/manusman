@@ -56,14 +56,14 @@ const StatCard: React.FC<{ data: StatCardData }> = ({ data }) => {
       </div>
 
       {/* Label */}
-      <div className="text-sm text-white/60">{data.label}</div>
+      <div className="text-sm text-gray-500">{data.label}</div>
 
       {/* Sparkline */}
       {data.trend && data.trend.length > 1 && (
         <div className="flex items-center gap-3">
           <Sparkline data={data.trend} color={color} />
           {data.trend_labels && (
-            <div className="flex gap-2 text-[10px] text-white/30">
+            <div className="flex gap-2 text-[10px] text-gray-300">
               {data.trend_labels.map((l, i) => <span key={i}>{l}</span>)}
             </div>
           )}
@@ -72,12 +72,12 @@ const StatCard: React.FC<{ data: StatCardData }> = ({ data }) => {
 
       {/* Source */}
       {data.source && (
-        <div className="text-xs text-white/30">Source: {data.source}</div>
+        <div className="text-xs text-gray-300">Source: {data.source}</div>
       )}
 
       {/* Context */}
       {data.context && (
-        <div className="text-xs text-white/50 leading-relaxed">{data.context}</div>
+        <div className="text-xs text-gray-400 leading-relaxed">{data.context}</div>
       )}
     </div>
   )

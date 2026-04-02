@@ -29,17 +29,17 @@ export const ContentSection = ({
   isLoading: boolean
 }) => (
   <div className="space-y-2">
-    <h2 className="text-[13px] font-medium text-white tracking-wide">
+    <h2 className="text-[16px] font-medium text-white tracking-wide">
       {title}
     </h2>
     {isLoading ? (
       <div className="mt-4 flex">
-        <p className="text-xs bg-gradient-to-r from-gray-300 via-gray-100 to-gray-300 bg-clip-text text-transparent animate-pulse">
+        <p className="text-sm bg-gradient-to-r from-gray-300 via-gray-100 to-gray-300 bg-clip-text text-transparent animate-pulse">
           Extracting problem statement...
         </p>
       </div>
     ) : (
-      <div className="text-[13px] leading-[1.4] text-gray-100 max-w-[600px]">
+      <div className="text-[16px] leading-[1.4] text-gray-100 max-w-[600px]">
         {content}
       </div>
     )}
@@ -55,13 +55,13 @@ const SolutionSection = ({
   isLoading: boolean
 }) => (
   <div className="space-y-2">
-    <h2 className="text-[13px] font-medium text-white tracking-wide">
+    <h2 className="text-[16px] font-medium text-white tracking-wide">
       {title}
     </h2>
     {isLoading ? (
       <div className="space-y-1.5">
         <div className="mt-4 flex">
-          <p className="text-xs bg-gradient-to-r from-gray-300 via-gray-100 to-gray-300 bg-clip-text text-transparent animate-pulse">
+          <p className="text-sm bg-gradient-to-r from-gray-300 via-gray-100 to-gray-300 bg-clip-text text-transparent animate-pulse">
             Loading solutions...
           </p>
         </div>
@@ -98,22 +98,22 @@ export const ComplexitySection = ({
   isLoading: boolean
 }) => (
   <div className="space-y-2">
-    <h2 className="text-[13px] font-medium text-white tracking-wide">
+    <h2 className="text-[16px] font-medium text-white tracking-wide">
       Complexity (Updated)
     </h2>
     {isLoading ? (
-      <p className="text-xs bg-gradient-to-r from-gray-300 via-gray-100 to-gray-300 bg-clip-text text-transparent animate-pulse">
+      <p className="text-sm bg-gradient-to-r from-gray-300 via-gray-100 to-gray-300 bg-clip-text text-transparent animate-pulse">
         Calculating complexity...
       </p>
     ) : (
       <div className="space-y-1">
-        <div className="flex items-start gap-2 text-[13px] leading-[1.4] text-gray-100">
+        <div className="flex items-start gap-2 text-[16px] leading-[1.4] text-gray-100">
           <div className="w-1 h-1 rounded-full bg-blue-400/80 mt-2 shrink-0" />
           <div>
             <strong>Time:</strong> {timeComplexity}
           </div>
         </div>
-        <div className="flex items-start gap-2 text-[13px] leading-[1.4] text-gray-100">
+        <div className="flex items-start gap-2 text-[16px] leading-[1.4] text-gray-100">
           <div className="w-1 h-1 rounded-full bg-blue-400/80 mt-2 shrink-0" />
           <div>
             <strong>Space:</strong> {spaceComplexity}
@@ -507,7 +507,7 @@ const Solutions: React.FC<SolutionsProps> = ({ setView }) => {
                     {/* Show loading state when waiting for solution */}
                     {problemStatementData && !solutionData && (
                       <div className="mt-4 flex">
-                        <p className="text-xs bg-gradient-to-r from-gray-300 via-gray-100 to-gray-300 bg-clip-text text-transparent animate-pulse">
+                        <p className="text-sm bg-gradient-to-r from-gray-300 via-gray-100 to-gray-300 bg-clip-text text-transparent animate-pulse">
                           {problemStatementData?.output_format?.subtype === "voice" 
                             ? "Processing voice input..." 
                             : "Generating solutions..."}

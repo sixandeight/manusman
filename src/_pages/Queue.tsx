@@ -163,18 +163,8 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
         setToolResults(prev => [data, ...prev])
       }),
       window.electronAPI.onManusToolPartial((data) => {
-        // Progressive update — show partial result while still running
-        setRunningTools(prev => new Map(prev).set(data.toolName, `streaming (${data.text?.length || 0} chars)`))
-        // Update or insert partial into results (replace if same tool)
-        setToolResults(prev => {
-          const existing = prev.findIndex(r => r.toolName === data.toolName && r.status !== "completed")
-          if (existing >= 0) {
-            const updated = [...prev]
-            updated[existing] = { ...data, _partial: true }
-            return updated
-          }
-          return [{ ...data, _partial: true }, ...prev]
-        })
+        // Partials only update running status — don't create result entries
+        setRunningTools(prev => new Map(prev).set(data.toolName, "thinking"))
       }),
       window.electronAPI.onManusToolError((data) => {
         setRunningTools(prev => {

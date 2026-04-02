@@ -51,11 +51,11 @@ const DISPLAY_LABELS: Record<string, string> = {
 interface ToolResultCardProps {
   result: ManusToolResult
   onDismiss: () => void
+  _embedded?: boolean // when true, skip outer shell (UnifiedCard provides it)
 }
 
-const ToolResultCard: React.FC<ToolResultCardProps> = ({ result, onDismiss }) => {
+const ToolResultCard: React.FC<ToolResultCardProps> = ({ result, onDismiss, _embedded }) => {
   const color = TOOL_COLORS[result.toolName] || "#888"
-  const isPartial = result._partial
 
   // Try to parse structured JSON
   const parsed = useMemo(() => {
@@ -71,6 +71,47 @@ const ToolResultCard: React.FC<ToolResultCardProps> = ({ result, onDismiss }) =>
     }
   }, [result.text])
 
+  // Embedded mode — just render content, no shell
+  if (_embedded) {
+    return (
+      <>
+        <div className="px-4 py-3 max-h-[400px] overflow-y-auto">
+          {parsed ? (
+            <PresetRouter data={parsed} />
+          ) : (
+            <div className="space-y-2">
+              {result.text.split("\n\n").filter(Boolean).map((p, i) => (
+                <p key={i} className="text-sm text-gray-700 leading-relaxed">{p}</p>
+              ))}
+            </div>
+          )}
+        </div>
+        {(result.files.length > 0 || result.taskUrl) && (
+          <>
+            <div className="h-px w-full" style={{ background: `${color}22` }} />
+            <div className="px-4 py-2 flex items-center justify-between">
+              <div className="flex gap-3">
+                {result.files.map((file, i) => (
+                  <a key={i} href={file.url} target="_blank" rel="noreferrer"
+                    className="text-xs hover:underline" style={{ color: `${color}aa` }}>
+                    {file.name}
+                  </a>
+                ))}
+              </div>
+              {result.taskUrl && (
+                <a href={result.taskUrl} target="_blank" rel="noreferrer"
+                  className="text-xs text-white/25 hover:text-white/40">
+                  View in Manus
+                </a>
+              )}
+            </div>
+          </>
+        )}
+      </>
+    )
+  }
+
+  // Standalone mode — full card with shell (fallback, shouldn't normally be used)
   const label = parsed?.display
     ? (DISPLAY_LABELS[parsed.display] || parsed.display.toUpperCase())
     : (TOOL_LABELS[result.toolName] || result.toolName)
@@ -84,27 +125,16 @@ const ToolResultCard: React.FC<ToolResultCardProps> = ({ result, onDismiss }) =>
         boxShadow: `0 0 20px ${color}22`,
       }}
     >
-      {/* Header — draggable zone */}
       <div className="flex items-center justify-between px-4 pt-3 pb-2 cursor-grab">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold uppercase tracking-widest" style={{ color }}>
-            {label}
-          </span>
-          <span
-            className="w-2 h-2 rounded-full"
-            style={{
-              background: isPartial ? "#facc15" : "#4ade80",
-              boxShadow: `0 0 6px ${isPartial ? "#facc15" : "#4ade80"}`,
-            }}
-          />
-          {isPartial && <span className="text-xs text-white/30">streaming</span>}
+          <span className="text-xs font-bold uppercase tracking-widest" style={{ color }}>{label}</span>
+          <span className="w-2 h-2 rounded-full" style={{ background: "#4ade80", boxShadow: "0 0 6px #4ade8066" }} />
         </div>
         <button onClick={onDismiss} className="text-white/20 hover:text-white/50 text-sm px-1">x</button>
       </div>
 
       <div className="h-px w-full" style={{ background: `${color}33` }} />
 
-      {/* Content */}
       <div className="px-4 py-3 max-h-[400px] overflow-y-auto">
         {parsed ? (
           <PresetRouter data={parsed} />

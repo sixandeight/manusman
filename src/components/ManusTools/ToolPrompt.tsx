@@ -61,6 +61,7 @@ const ToolPrompt: React.FC<ToolPromptProps> = ({ toolName, needsScreenshot, onSu
     }
 
     onSubmit(toolName, args, screenshotPath)
+    onCancel() // close prompt immediately, don't wait for IPC
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

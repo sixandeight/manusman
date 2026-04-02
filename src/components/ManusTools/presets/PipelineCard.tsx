@@ -26,9 +26,9 @@ const PipelineCard: React.FC<{ data: PipelineData }> = ({ data }) => {
     <div className="space-y-3">
       {/* Client + Value */}
       <div className="flex items-center justify-between">
-        <div className="text-base font-semibold text-white/90">{data.client}</div>
+        <div className="text-base font-semibold text-gray-800">{data.client}</div>
         {data.deal_value && (
-          <div className="text-sm font-mono text-white/60">{data.deal_value}</div>
+          <div className="text-sm font-mono text-gray-500">{data.deal_value}</div>
         )}
       </div>
 
@@ -42,12 +42,12 @@ const PipelineCard: React.FC<{ data: PipelineData }> = ({ data }) => {
               style={{
                 background: i <= data.current_stage
                   ? (i === data.current_stage ? "#60a5fa" : "#60a5fa88")
-                  : "rgba(255,255,255,0.08)",
+                  : "rgba(0,0,0,0.06)",
               }}
             />
           ))}
         </div>
-        <div className="flex justify-between text-[10px] text-white/30">
+        <div className="flex justify-between text-[10px] text-gray-300">
           {data.stages.map((s, i) => (
             <span key={i} className={i === data.current_stage ? "text-blue-400 font-bold" : ""}>
               {s}
@@ -57,11 +57,11 @@ const PipelineCard: React.FC<{ data: PipelineData }> = ({ data }) => {
       </div>
 
       {/* Next action — prominent */}
-      <div className="p-2 rounded-md bg-white/5">
-        <div className="text-[10px] text-white/30 uppercase tracking-wider mb-1">Next action</div>
-        <div className="text-sm font-medium text-white/90">{data.next_action}</div>
+      <div className="p-2 rounded-md bg-gray-50">
+        <div className="text-[10px] text-gray-300 uppercase tracking-wider mb-1">Next action</div>
+        <div className="text-sm font-medium text-gray-800">{data.next_action}</div>
         {data.next_action_due && (
-          <div className="text-xs text-white/40 mt-0.5">Due: {data.next_action_due}</div>
+          <div className="text-xs text-gray-400 mt-0.5">Due: {data.next_action_due}</div>
         )}
       </div>
 
@@ -86,7 +86,7 @@ const PipelineCard: React.FC<{ data: PipelineData }> = ({ data }) => {
 
       {/* Last activity */}
       {data.last_activity && (
-        <div className="text-xs text-white/30">Last: {data.last_activity}</div>
+        <div className="text-xs text-gray-300">Last: {data.last_activity}</div>
       )}
     </div>
   )

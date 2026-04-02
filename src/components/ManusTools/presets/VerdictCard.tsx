@@ -42,21 +42,21 @@ const VerdictCard: React.FC<{ data: VerdictData }> = ({ data }) => {
           <span
             key={i}
             className="w-2 h-2 rounded-full"
-            style={{ background: i <= dots ? style.color : "rgba(255,255,255,0.1)" }}
+            style={{ background: i <= dots ? style.color : "rgba(0,0,0,0.06)" }}
           />
         ))}
-        <span className="text-[10px] text-white/30 ml-2">{data.confidence} confidence</span>
+        <span className="text-[10px] text-gray-300 ml-2">{data.confidence} confidence</span>
       </div>
 
       {/* Claim */}
-      <div className="text-sm text-white/60 italic">"{data.claim}"</div>
+      <div className="text-sm text-gray-500 italic">"{data.claim}"</div>
 
       {/* Evidence */}
-      <div className="text-sm text-white/80 leading-relaxed">{data.evidence}</div>
+      <div className="text-sm text-gray-700 leading-relaxed">{data.evidence}</div>
 
       {/* Source */}
       {data.source && (
-        <div className="text-xs text-white/30">
+        <div className="text-xs text-gray-300">
           Source: {data.source_url ? (
             <a href={data.source_url} target="_blank" rel="noreferrer" className="text-blue-400/60 hover:text-blue-400">{data.source}</a>
           ) : data.source}
@@ -65,7 +65,7 @@ const VerdictCard: React.FC<{ data: VerdictData }> = ({ data }) => {
 
       {/* Context */}
       {data.context && (
-        <div className="text-xs text-white/40">{data.context}</div>
+        <div className="text-xs text-gray-400">{data.context}</div>
       )}
     </div>
   )

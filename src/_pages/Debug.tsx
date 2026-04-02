@@ -104,13 +104,13 @@ const CodeComparisonSection = ({
 
   return (
     <div className="space-y-1.5">
-      <h2 className="text-[13px] font-medium text-white tracking-wide">
+      <h2 className="text-[16px] font-medium text-white tracking-wide">
         Code Comparison
       </h2>
       {isLoading ? (
         <div className="space-y-1">
           <div className="mt-3 flex">
-            <p className="text-xs bg-gradient-to-r from-gray-300 via-gray-100 to-gray-300 bg-clip-text text-transparent animate-pulse">
+            <p className="text-sm bg-gradient-to-r from-gray-300 via-gray-100 to-gray-300 bg-clip-text text-transparent animate-pulse">
               Loading code comparison...
             </p>
           </div>
@@ -120,7 +120,7 @@ const CodeComparisonSection = ({
           {/* Previous Code */}
           <div className="w-1/2 border-r border-gray-700">
             <div className="bg-[#2d333b] px-3 py-1.5">
-              <h3 className="text-[11px] font-medium text-gray-200">
+              <h3 className="text-[13px] font-medium text-gray-200">
                 Previous Version
               </h3>
             </div>
@@ -157,7 +157,7 @@ const CodeComparisonSection = ({
           {/* New Code */}
           <div className="w-1/2">
             <div className="bg-[#2d333b] px-3 py-1.5">
-              <h3 className="text-[11px] font-medium text-gray-200">
+              <h3 className="text-[13px] font-medium text-gray-200">
                 New Version
               </h3>
             </div>
