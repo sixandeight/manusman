@@ -128,9 +128,11 @@ export class ManusHelper {
 
   public async pollUntilComplete(
     taskId: string,
-    onStatusUpdate?: (status: string) => void
+    onStatusUpdate?: (status: string) => void,
+    onPartialResult?: (partial: ManusResult) => void
   ): Promise<ManusResult> {
     let attempts = 0
+    let lastSeenMessageCount = 0
 
     while (attempts < this.maxPollAttempts) {
       attempts++
@@ -140,6 +142,17 @@ export class ManusHelper {
 
         if (onStatusUpdate) {
           onStatusUpdate(status.status)
+        }
+
+        // Emit partial results as new assistant messages appear
+        if (onPartialResult && status.output) {
+          const assistantMessages = status.output.filter(m => m.role === "assistant")
+          if (assistantMessages.length > lastSeenMessageCount) {
+            lastSeenMessageCount = assistantMessages.length
+            const partial = this.parseTaskResult(taskId, status)
+            partial.status = status.status // keep actual status, not "completed"
+            onPartialResult(partial)
+          }
         }
 
         if (status.status === "completed") {
@@ -154,6 +167,16 @@ export class ManusHelper {
             text: status.error || "Task failed",
             files: [],
             raw: status,
+          }
+        }
+
+        // If pending (waiting for user input), auto-continue
+        if (status.status === "pending") {
+          console.log(`[ManusHelper] Task ${taskId} is pending — sending auto-continue`)
+          try {
+            await this.continueTask(taskId, "Continue. Do not wait for my input. Complete the task with what you have.")
+          } catch (err) {
+            console.error("[ManusHelper] Auto-continue failed:", err)
           }
         }
 
@@ -177,7 +200,8 @@ export class ManusHelper {
     toolName: string,
     prompt: string,
     attachments?: Array<{ filename: string; fileData?: string; url?: string; mimeType?: string }>,
-    onStatusUpdate?: (status: string) => void
+    onStatusUpdate?: (status: string) => void,
+    onPartialResult?: (partial: ManusResult) => void
   ): Promise<ManusResult & { toolName: string }> {
     console.log(`[ManusHelper] Running tool: ${toolName}`)
 
@@ -186,8 +210,29 @@ export class ManusHelper {
       agentProfile: "speed",
     })
 
-    const result = await this.pollUntilComplete(taskId, onStatusUpdate)
+    const result = await this.pollUntilComplete(taskId, onStatusUpdate, onPartialResult)
     return { ...result, taskUrl, toolName }
+  }
+
+  public async continueTask(taskId: string, message: string): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/v1/tasks`, {
+      method: "POST",
+      headers: {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "API_KEY": this.apiKey,
+      },
+      body: JSON.stringify({
+        taskId,
+        prompt: message,
+        mode: "speed",
+      }),
+    })
+
+    if (!response.ok) {
+      const errorBody = await response.text()
+      throw new Error(`Manus continue error: ${response.status} - ${errorBody}`)
+    }
   }
 
   private parseTaskResult(taskId: string, status: ManusTaskStatus): ManusResult {

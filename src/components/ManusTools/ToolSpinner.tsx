@@ -19,7 +19,7 @@ const ToolSpinner: React.FC<ToolSpinnerProps> = ({ toolName, status }) => {
   const label = TOOL_LABELS[toolName] || toolName
 
   return (
-    <div className="p-3 bg-black/60 backdrop-blur-md rounded-lg border border-white/10">
+    <div className="p-3 rounded-lg" style={{ background: "rgba(255, 255, 0, 0.2)", border: "2px solid rgba(255, 255, 0, 0.5)" }}>
       <div className="flex items-center gap-3">
         <div className="flex gap-1">
           <span className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />

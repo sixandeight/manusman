@@ -68,7 +68,7 @@ const ToolPrompt: React.FC<ToolPromptProps> = ({ toolName, needsScreenshot, onSu
   }
 
   return (
-    <div className="p-3 bg-black/70 backdrop-blur-md rounded-lg border border-white/20 shadow-xl">
+    <div className="p-3 rounded-lg shadow-xl" style={{ background: "rgba(255, 165, 0, 0.25)", border: "2px solid rgba(255, 165, 0, 0.6)" }}>
       <div className="text-sm font-medium text-white/90 mb-2">{config.label}</div>
       <form onSubmit={handleSubmit} className="flex gap-2">
         <input

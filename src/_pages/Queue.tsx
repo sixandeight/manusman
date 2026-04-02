@@ -162,6 +162,20 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
         })
         setToolResults(prev => [data, ...prev])
       }),
+      window.electronAPI.onManusToolPartial((data) => {
+        // Progressive update — show partial result while still running
+        setRunningTools(prev => new Map(prev).set(data.toolName, `streaming (${data.text?.length || 0} chars)`))
+        // Update or insert partial into results (replace if same tool)
+        setToolResults(prev => {
+          const existing = prev.findIndex(r => r.toolName === data.toolName && r.status !== "completed")
+          if (existing >= 0) {
+            const updated = [...prev]
+            updated[existing] = { ...data, _partial: true }
+            return updated
+          }
+          return [{ ...data, _partial: true }, ...prev]
+        })
+      }),
       window.electronAPI.onManusToolError((data) => {
         setRunningTools(prev => {
           const next = new Map(prev)
@@ -261,10 +275,31 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
         background: "transparent",
       }}
     >
-      {/* Command bar — top-left, interactive */}
+      {/* DEBUG: state indicator — always visible bottom-left */}
+      <div
+        className="fixed bottom-2 left-2 z-[999] px-3 py-1 rounded font-mono"
+        style={{
+          pointerEvents: "auto",
+          background: "rgba(0, 255, 0, 0.15)",
+          border: "1px solid rgba(0, 255, 0, 0.4)",
+          color: "#0f0",
+          fontSize: "11px",
+        }}
+        onMouseEnter={() => window.electronAPI.setIgnoreMouse(false)}
+        onMouseLeave={() => window.electronAPI.setIgnoreMouse(true)}
+      >
+        running: {runningTools.size} | results: {toolResults.length} | prompt: {activeToolPrompt ? activeToolPrompt.toolName : "none"} | chat: {isChatOpen ? "open" : "closed"}
+      </div>
+
+      {/* Command bar — top-left, interactive (DEBUG: blue tint) */}
       <div
         className="fixed top-0 left-0 z-50 px-2 py-1"
-        style={{ pointerEvents: "auto" }}
+        style={{
+          pointerEvents: "auto",
+          background: "rgba(30, 80, 220, 0.15)",
+          border: "1px solid rgba(30, 80, 220, 0.35)",
+          borderRadius: "0 0 8px 0",
+        }}
         onMouseEnter={() => window.electronAPI.setIgnoreMouse(false)}
         onMouseLeave={() => window.electronAPI.setIgnoreMouse(true)}
       >
@@ -296,7 +331,7 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
           <div className="mt-2 max-w-md liquid-glass chat-container p-4 flex flex-col">
             <div className="flex-1 overflow-y-auto mb-3 p-3 rounded-lg bg-white/10 backdrop-blur-md max-h-64 min-h-[120px] glass-content border border-white/20 shadow-lg">
               {chatMessages.length === 0 ? (
-                <div className="text-sm text-gray-600 text-center mt-8">
+                <div className="text-base text-gray-600 text-center mt-8">
                   Chat with {currentModel.provider === "ollama" ? "local" : "cloud"} {currentModel.model}
                 </div>
               ) : (
@@ -306,7 +341,7 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
                     className={`w-full flex ${msg.role === "user" ? "justify-end" : "justify-start"} mb-3`}
                   >
                     <div
-                      className={`max-w-[80%] px-3 py-1.5 rounded-xl text-xs shadow-md backdrop-blur-sm border ${
+                      className={`max-w-[80%] px-3 py-1.5 rounded-xl text-sm shadow-md backdrop-blur-sm border ${
                         msg.role === "user"
                           ? "bg-gray-700/80 text-gray-100 ml-12 border-gray-600/40"
                           : "bg-white/85 text-gray-700 mr-12 border-gray-200/50"
@@ -335,7 +370,7 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
             >
               <input
                 ref={chatInputRef}
-                className="flex-1 rounded-lg px-3 py-2 bg-white/25 backdrop-blur-md text-gray-800 placeholder-gray-500 text-xs focus:outline-none focus:ring-1 focus:ring-gray-400/60 border border-white/40 shadow-lg"
+                className="flex-1 rounded-lg px-3 py-2 bg-white/25 backdrop-blur-md text-gray-800 placeholder-gray-500 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400/60 border border-white/40 shadow-lg"
                 placeholder="Type your message..."
                 value={chatInput}
                 onChange={e => setChatInput(e.target.value)}

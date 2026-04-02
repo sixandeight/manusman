@@ -226,6 +226,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.on("manus-tool-result", sub)
     return () => { ipcRenderer.removeListener("manus-tool-result", sub) }
   },
+  onManusToolPartial: (callback: (data: any) => void) => {
+    const sub = (_: any, data: any) => callback(data)
+    ipcRenderer.on("manus-tool-partial", sub)
+    return () => { ipcRenderer.removeListener("manus-tool-partial", sub) }
+  },
   onManusToolError: (callback: (data: { toolName: string; error: string }) => void) => {
     const sub = (_: any, data: any) => callback(data)
     ipcRenderer.on("manus-tool-error", sub)

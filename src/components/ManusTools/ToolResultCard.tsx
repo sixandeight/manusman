@@ -42,7 +42,7 @@ const ToolResultCard: React.FC<ToolResultCardProps> = ({ result, onDismiss }) =>
   const paragraphs = result.text.split("\n\n").filter(Boolean)
 
   return (
-    <div className={`p-4 bg-black/70 backdrop-blur-md rounded-lg border ${borderColor} shadow-xl relative`}>
+    <div className={`p-4 rounded-lg shadow-xl relative`} style={{ background: "rgba(0, 200, 100, 0.2)", border: `2px solid rgba(0, 200, 100, 0.5)` }}>
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">

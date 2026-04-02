@@ -66,6 +66,7 @@ declare global {
       onManusToolStarted: (callback: (data: { toolName: string; args: Record<string, string> }) => void) => () => void
       onManusToolStatus: (callback: (data: { toolName: string; status: string }) => void) => () => void
       onManusToolResult: (callback: (data: any) => void) => () => void
+      onManusToolPartial: (callback: (data: any) => void) => () => void
       onManusToolError: (callback: (data: { toolName: string; error: string }) => void) => () => void
 
       invoke: (channel: string, ...args: any[]) => Promise<any>

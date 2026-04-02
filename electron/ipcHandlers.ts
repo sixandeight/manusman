@@ -195,6 +195,17 @@ export function initializeIpcHandlers(appState: AppState): void {
   });
 
   // ── Manus Tool Handlers ──────────────────────────────────
+
+  // Button-triggered tools (same as keybind but from renderer)
+  const screenshotTools = ["who_is_this", "live_fact_check", "competitive_intel"]
+  ipcMain.handle("trigger-manus-tool", async (_, toolName: string) => {
+    const mainWindow = appState.getMainWindow()
+    if (mainWindow) {
+      const needsScreenshot = screenshotTools.includes(toolName)
+      mainWindow.webContents.send("manus-tool-prompt", { toolName, needsScreenshot })
+    }
+  })
+
   ipcMain.handle("run-manus-tool", async (_, toolName: string, args: Record<string, string>, screenshotPath?: string) => {
     try {
       const result = await appState.processingHelper.runManusTool(

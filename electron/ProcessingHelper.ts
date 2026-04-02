@@ -12,28 +12,36 @@ const isDev = process.env.NODE_ENV === "development"
 const isDevTest = process.env.IS_DEV_TEST === "true"
 const MOCK_API_WAIT_TIME = Number(process.env.MOCK_API_WAIT_TIME) || 500
 
+// System instructions prepended to every Manus prompt
+const MANUS_SYSTEM = `IMPORTANT RULES:
+- Do NOT ask clarifying questions. Do NOT wait for user input. Work with what you have.
+- Use your Notion MCP integration to access Notion data. Do NOT open notion.so in a browser.
+- Use your Google Drive MCP integration to access Google Drive. Do NOT open drive.google.com in a browser.
+- If an MCP integration is not connected, say so and proceed with what you can find elsewhere.
+- Be concise. Return structured, actionable information. No filler.`
+
 // Prompt templates for each Manus tool
 const TOOL_PROMPTS: Record<string, (args: Record<string, string>) => string> = {
   who_is_this: (args) =>
-    `Look up this person and give me a concise summary. Find their name, company, role, any past interactions or notes in my Notion, and their deal stage if applicable. Search Notion and the web.\n\nContext: ${args.context || "See attached screenshot"}${args.name ? `\nName: ${args.name}` : ""}${args.company ? `\nCompany: ${args.company}` : ""}`,
+    `${MANUS_SYSTEM}\n\nTASK: Look up this person. Return: name, company, role, past interactions or notes from Notion, deal stage if applicable. Also search the web.\n\nContext: ${args.context || "See attached screenshot"}${args.name ? `\nName: ${args.name}` : ""}${args.company ? `\nCompany: ${args.company}` : ""}`,
 
   meeting_brief: (args) =>
-    `Prepare a concise meeting brief for my upcoming meeting with: ${args.person_or_company}\n\nPull from my Notion: last meeting notes, open action items, relationship history, key context. Also check Google Drive for any recent shared documents.\n\nReturn a structured brief with: key points to remember, open items, suggested talking points.${args.meeting_topic ? `\nMeeting topic: ${args.meeting_topic}` : ""}`,
+    `${MANUS_SYSTEM}\n\nTASK: Prepare a concise meeting brief for: ${args.person_or_company}\n\nUse Notion MCP to pull: last meeting notes, open action items, relationship history. Use Google Drive MCP for any recent shared documents.\n\nReturn a structured brief: key points, open items, suggested talking points.${args.meeting_topic ? `\nMeeting topic: ${args.meeting_topic}` : ""}`,
 
   live_fact_check: (args) =>
-    `Fact-check this claim. Verify against my documents in Google Drive, Notion, and the web. Be concise — just tell me if it's accurate, partially true, or false, with the source.\n\nClaim: ${args.claim}${args.source_context ? `\nSource: ${args.source_context}` : ""}`,
+    `${MANUS_SYSTEM}\n\nTASK: Fact-check this claim. Check Google Drive MCP, Notion MCP, and the web. Return: accurate / partially true / false, with the source.\n\nClaim: ${args.claim}${args.source_context ? `\nSource: ${args.source_context}` : ""}`,
 
   company_snapshot: (args) =>
-    `Research the company "${args.company_name}" and give me a concise snapshot: size, funding stage, recent news, industry, key people. Also check my Notion for any past interactions or deals with them.${args.specific_focus ? `\nFocus on: ${args.specific_focus}` : ""}`,
+    `${MANUS_SYSTEM}\n\nTASK: Research "${args.company_name}". Return: size, funding, recent news, industry, key people. Check Notion MCP for past interactions or deals.${args.specific_focus ? `\nFocus on: ${args.specific_focus}` : ""}`,
 
   deal_status: (args) =>
-    `Check the current status of my deal/relationship with "${args.client_name}" in Notion. Return: pipeline stage, last interaction date, blockers, next actions, and any recent activity. Be concise.`,
+    `${MANUS_SYSTEM}\n\nTASK: Check deal status for "${args.client_name}" using Notion MCP. Return: pipeline stage, last interaction date, blockers, next actions, recent activity.`,
 
   competitive_intel: (args) =>
-    `Give me competitive intelligence on "${args.competitor_name}". Check my Google Drive and Notion for past comparisons and win/loss data. Also search the web for their latest positioning.\n\nReturn: key differentiators, their strengths/weaknesses vs us, recent moves.${args.comparison_context ? `\nFocus: ${args.comparison_context}` : ""}${args.our_product ? `\nOur product: ${args.our_product}` : ""}`,
+    `${MANUS_SYSTEM}\n\nTASK: Competitive intel on "${args.competitor_name}". Check Google Drive MCP and Notion MCP for past comparisons and win/loss data. Search web for latest positioning.\n\nReturn: key differentiators, strengths/weaknesses vs us, recent moves.${args.comparison_context ? `\nFocus: ${args.comparison_context}` : ""}${args.our_product ? `\nOur product: ${args.our_product}` : ""}`,
 
   number_lookup: (args) =>
-    `Find this specific number/stat from my Google Drive documents and Notion databases: "${args.query}"${args.time_period ? `\nTime period: ${args.time_period}` : ""}${args.source_hint ? `\nLook in: ${args.source_hint}` : ""}\n\nReturn just the number/stat with its source. Be concise.`,
+    `${MANUS_SYSTEM}\n\nTASK: Find this number/stat using Google Drive MCP and Notion MCP: "${args.query}"${args.time_period ? `\nTime period: ${args.time_period}` : ""}${args.source_hint ? `\nLook in: ${args.source_hint}` : ""}\n\nReturn just the number with its source.`,
 }
 
 export type ManusToolName = "who_is_this" | "meeting_brief" | "live_fact_check" | "company_snapshot" | "deal_status" | "competitive_intel" | "number_lookup"
@@ -243,14 +251,19 @@ export class ProcessingHelper {
         prompt,
         attachments,
         (status) => {
-          // Send status updates to renderer
           if (mainWindow) {
             mainWindow.webContents.send("manus-tool-status", { toolName, status })
+          }
+        },
+        (partial) => {
+          // Progressive results — send partial text as Manus works
+          if (mainWindow) {
+            mainWindow.webContents.send("manus-tool-partial", { ...partial, toolName })
           }
         }
       )
 
-      // Send result to renderer
+      // Send final result to renderer
       if (mainWindow) {
         mainWindow.webContents.send("manus-tool-result", result)
       }
