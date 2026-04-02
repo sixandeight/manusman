@@ -18,6 +18,8 @@ export interface PhysicsNode extends SimulationNodeDatum {
   id: string
   width: number
   height: number
+  targetWidth: number
+  targetHeight: number
   zone: string
 }
 
@@ -167,6 +169,14 @@ export class PhysicsEngine {
 
         const positions = new Map<string, { x: number; y: number }>()
         for (const node of this.nodes) {
+          // Gradually interpolate size toward target (20px per tick ≈ smooth over ~10 ticks)
+          if (node.width !== node.targetWidth) {
+            node.width += Math.sign(node.targetWidth - node.width) * Math.min(20, Math.abs(node.targetWidth - node.width))
+          }
+          if (node.height !== node.targetHeight) {
+            node.height += Math.sign(node.targetHeight - node.height) * Math.min(20, Math.abs(node.targetHeight - node.height))
+          }
+
           // Center repulsion — push cards away from the middle zone
           const dx = (node.x || 0) - cx
           const dy = (node.y || 0) - cy
@@ -209,6 +219,8 @@ export class PhysicsEngine {
       y: target.y + (Math.random() - 0.5) * 60,
       width,
       height,
+      targetWidth: width,
+      targetHeight: height,
       zone,
     }
     this.nodes.push(node)
@@ -232,10 +244,10 @@ export class PhysicsEngine {
   public updateNodeSize(id: string, width: number, height: number): void {
     const node = this.nodes.find(n => n.id === id)
     if (node) {
-      node.width = width
-      node.height = height
-      // Gentle nudge — don't jolt everything when a card expands
-      this.simulation.alpha(0.05).restart()
+      // Set targets — actual size will interpolate in tick handler
+      node.targetWidth = width
+      node.targetHeight = height
+      this.simulation.alpha(0.08).restart()
     }
   }
 
