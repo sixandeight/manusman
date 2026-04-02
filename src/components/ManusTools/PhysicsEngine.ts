@@ -157,8 +157,17 @@ export class PhysicsEngine {
       .force("charge", forceManyBody<PhysicsNode>().strength(-60).distanceMax(400))
       .force("collide", forceCollide<PhysicsNode>().radius(d => Math.sqrt(d.width ** 2 + d.height ** 2) / 2 + 16))
       .force("link", forceLink<PhysicsNode, PhysicsLink>().id(d => d.id).distance(120).strength(0.3))
-      .force("zoneX", forceX<PhysicsNode>().x(d => getZoneTarget(d.zone, screenW, screenH).x).strength(0.05))
-      .force("zoneY", forceY<PhysicsNode>().y(d => getZoneTarget(d.zone, screenW, screenH).y).strength(0.05))
+      .force("zoneX", forceX<PhysicsNode>().x(d => getZoneTarget(d.zone, screenW, screenH).x).strength(0.15))
+      .force("zoneY", forceY<PhysicsNode>().y(d => getZoneTarget(d.zone, screenW, screenH).y).strength(0.15))
+      // Repel from center — keep the middle of the screen clear
+      .force("centerRepelX", forceX<PhysicsNode>().x(d => {
+        const cx = screenW / 2
+        return (d.x || 0) < cx ? screenW * 0.2 : screenW * 0.8
+      }).strength(0.03))
+      .force("centerRepelY", forceY<PhysicsNode>().y(d => {
+        const cy = screenH / 2
+        return (d.y || 0) < cy ? screenH * 0.2 : screenH * 0.8
+      }).strength(0.03))
       .on("tick", () => {
         const positions = new Map<string, { x: number; y: number }>()
         for (const node of this.nodes) {
