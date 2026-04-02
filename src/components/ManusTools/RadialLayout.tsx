@@ -128,13 +128,29 @@ const CardView: React.FC<{
 
   const phaseLabel = card.phase === "pending" ? "pending" : card.phase === "thinking" ? "thinking" : ""
 
-  // Parse result JSON if complete
+  // Parse result JSON if complete — extract JSON from anywhere in the text
   let parsed: any = null
   if (card.phase === "complete" && card.result?.text) {
-    try {
-      const t = card.result.text.trim().replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim()
-      parsed = JSON.parse(t)
-    } catch {}
+    const text = card.result.text
+
+    // Strategy 1: try extracting ```json ... ``` block from anywhere in the text
+    const codeBlockMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/)
+    if (codeBlockMatch) {
+      try { parsed = JSON.parse(codeBlockMatch[1].trim()) } catch {}
+    }
+
+    // Strategy 2: try finding a { ... } JSON object in the text
+    if (!parsed) {
+      const jsonMatch = text.match(/\{[\s\S]*"display"\s*:\s*"[^"]+[\s\S]*\}/)
+      if (jsonMatch) {
+        try { parsed = JSON.parse(jsonMatch[0]) } catch {}
+      }
+    }
+
+    // Strategy 3: try the whole text as JSON
+    if (!parsed) {
+      try { parsed = JSON.parse(text.trim()) } catch {}
+    }
   }
 
   return (
