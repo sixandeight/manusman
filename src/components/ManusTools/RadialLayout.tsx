@@ -50,25 +50,22 @@ function nextId(tool: string) { return `c-${tool}-${++counter}-${Date.now()}` }
 // Parse result JSON — extract JSON from anywhere in text
 function parseResultJSON(text: string): any | null {
   if (!text) return null
-  // Strategy 1: extract ```json ... ``` block
   const codeBlockMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/)
   if (codeBlockMatch) {
     try { return JSON.parse(codeBlockMatch[1].trim()) } catch {}
   }
-  // Strategy 2: find { ... "display" ... } object
   const jsonMatch = text.match(/\{[\s\S]*"display"\s*:\s*"[^"]+[\s\S]*\}/)
   if (jsonMatch) {
     try { return JSON.parse(jsonMatch[0]) } catch {}
   }
-  // Strategy 3: whole text as JSON
   try { return JSON.parse(text.trim()) } catch {}
   return null
 }
 
 // ── Auto-fade hook ─────────────────────────────────────
 
-const FADE_DELAY = 30000   // 30s before fade starts
-const FADE_DURATION = 15000 // 15s fade
+const FADE_DELAY = 30000
+const FADE_DURATION = 15000
 
 function useAutoFade(
   phase: Phase,
@@ -106,7 +103,6 @@ function useAutoFade(
     }, FADE_DELAY)
   }, [clearTimers, onDeleteRef])
 
-  // Start timer when phase becomes complete — only trigger on phase change
   useEffect(() => {
     if (phase === "complete") {
       startFadeTimer()
@@ -142,7 +138,6 @@ const CardView: React.FC<{
   const label = TOOL_LABELS[card.toolName] || card.toolName
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // Stable ref for delete callback — avoids stale closure in useAutoFade
   const onDeleteRef = useRef(() => onDismiss(card.id))
   onDeleteRef.current = () => onDismiss(card.id)
 
@@ -183,7 +178,6 @@ const CardView: React.FC<{
           transition: "width 400ms ease",
         }}
       >
-        {/* Header — drag zone */}
         <div className="flex items-center justify-between px-4 h-8 cursor-grab">
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color }}>{label}</span>
@@ -198,7 +192,6 @@ const CardView: React.FC<{
           <button onClick={() => onDismiss(card.id)} className="text-white/20 hover:text-white/40 text-xs leading-none">x</button>
         </div>
 
-        {/* Input */}
         {card.phase === "input" && (
           <form onSubmit={submit} className="px-4 pb-3">
             <input ref={inputRef} value={card.query}
@@ -209,7 +202,6 @@ const CardView: React.FC<{
           </form>
         )}
 
-        {/* Pending / Thinking */}
         {(card.phase === "pending" || card.phase === "thinking") && (
           <div className="px-4 pb-3">
             {card.query && <div className="text-sm text-white/50 mb-2">{card.query}</div>}
@@ -226,7 +218,6 @@ const CardView: React.FC<{
           </div>
         )}
 
-        {/* Complete — render preset */}
         {card.phase === "complete" && (
           <div className="px-4 pb-4 pt-1">
             {parsed?.display ? (
@@ -258,28 +249,40 @@ const RadialLayout: React.FC<Props> = ({
   toolResults, runningTools, activeToolPrompt, onToolSubmit, onToolCancel, onDismissResult: _onDismissResult,
 }) => {
   const [cards, setCards] = useState<Map<string, Card>>(new Map())
-  const [positions, setPositions] = useState<Map<string, { x: number; y: number }>>(new Map())
+  const positionsRef = useRef<Map<string, { x: number; y: number }>>(new Map())
+  const [, forceRender] = useState(0) // trigger re-render when positions change meaningfully
   const queues = useRef<Map<string, string[]>>(new Map())
   const processedResults = useRef<Set<string>>(new Set())
   const physicsRef = useRef<PhysicsEngine | null>(null)
   const dragOverride = useRef<Map<string, { x: number; y: number }>>(new Map())
+  const onToolSubmitRef = useRef(onToolSubmit)
+  onToolSubmitRef.current = onToolSubmit
 
-  // Initialize physics engine
+  // Initialize physics engine — use ref for positions to avoid 60fps state updates
   useEffect(() => {
+    let lastRender = 0
     const engine = new PhysicsEngine(
       window.innerWidth,
       window.innerHeight,
       (newPositions) => {
-        setPositions(prev => {
-          const next = new Map(prev)
-          for (const [id, pos] of newPositions) {
-            // Don't override dragged cards
-            if (!dragOverride.current.has(id)) {
-              next.set(id, pos)
+        let changed = false
+        for (const [id, pos] of newPositions) {
+          if (!dragOverride.current.has(id)) {
+            const old = positionsRef.current.get(id)
+            if (!old || Math.abs(old.x - pos.x) > 0.5 || Math.abs(old.y - pos.y) > 0.5) {
+              positionsRef.current.set(id, pos)
+              changed = true
             }
           }
-          return next
-        })
+        }
+        // Throttle re-renders to ~30fps max
+        if (changed) {
+          const now = Date.now()
+          if (now - lastRender > 33) {
+            lastRender = now
+            forceRender(n => n + 1)
+          }
+        }
       }
     )
     physicsRef.current = engine
@@ -296,7 +299,7 @@ const RadialLayout: React.FC<Props> = ({
     }))
     physicsRef.current?.addNode(id, 300, 80)
     onToolCancel()
-  }, [activeToolPrompt])
+  }, [activeToolPrompt]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Running tools → update existing cards phase
   useEffect(() => {
@@ -321,32 +324,40 @@ const RadialLayout: React.FC<Props> = ({
     })
   }, [runningTools])
 
-  // Results → upgrade EXISTING card to complete + run entity linker
+  // Results → match to cards and upgrade to complete
+  // FIX: queue shift happens OUTSIDE setCards to prevent double-shift if React calls updater twice
   useEffect(() => {
     if (toolResults.length === 0) return
 
-    console.log(`[RadialLayout] Processing ${toolResults.length} results, cards: ${cards.size}, queues:`, Object.fromEntries(queues.current))
+    // Step 1: compute matches outside the updater (no side effects inside setCards)
+    const matches = new Map<string, any>() // cardId → result
+    for (const result of toolResults) {
+      if (result._partial) continue
+      const rKey = result.taskId || `${result.toolName}-${result.text?.substring(0, 20)}`
+      if (processedResults.current.has(rKey)) continue
+      processedResults.current.add(rKey)
 
+      const q = queues.current.get(result.toolName)
+      const cardId = q?.shift()
+      if (cardId) {
+        matches.set(cardId, result)
+      }
+    }
+
+    if (matches.size === 0) return
+
+    // Step 2: apply matches inside the updater (pure state transformation)
     setCards(prev => {
       const next = new Map(prev)
       let changed = false
 
-      for (const result of toolResults) {
-        if (result._partial) continue
-        const rKey = result.taskId || `${result.toolName}-${result.text?.substring(0, 20)}`
-        if (processedResults.current.has(rKey)) continue
-        processedResults.current.add(rKey)
-
-        const q = queues.current.get(result.toolName)
-        const cardId = q?.shift()
-        console.log(`[RadialLayout] Result for "${result.toolName}" → queue:`, q, `cardId:`, cardId, `cardExists:`, cardId ? next.has(cardId) : false)
-        if (cardId && next.has(cardId)) {
-          const card = next.get(cardId)!
-          const parsed = parseResultJSON(result.text)
-          next.set(cardId, { ...card, phase: "complete", result, parsedResult: parsed })
-          physicsRef.current?.updateNodeSize(cardId, 480, 300)
-          changed = true
-        }
+      for (const [cardId, result] of matches) {
+        if (!next.has(cardId)) continue
+        const card = next.get(cardId)!
+        const parsed = parseResultJSON(result.text)
+        next.set(cardId, { ...card, phase: "complete", result, parsedResult: parsed })
+        physicsRef.current?.updateNodeSize(cardId, 480, 300)
+        changed = true
       }
 
       // Run entity linker on all complete cards
@@ -368,42 +379,47 @@ const RadialLayout: React.FC<Props> = ({
     })
   }, [toolResults])
 
+  // Use ref for onToolSubmit to avoid handleSubmit instability
   const handleSubmit = useCallback((cardId: string, toolName: string, args: Record<string, string>, screenshot?: string) => {
     const q = queues.current.get(toolName) || []
     q.push(cardId)
     queues.current.set(toolName, q)
-    console.log(`[RadialLayout] Submit: ${toolName} → cardId: ${cardId}, queue now:`, [...q])
     setCards(prev => { const n = new Map(prev); const c = n.get(cardId); if (c) n.set(cardId, { ...c, phase: "pending" }); return n })
-    onToolSubmit(toolName, args, screenshot)
-  }, [onToolSubmit])
+    onToolSubmitRef.current(toolName, args, screenshot)
+  }, []) // stable — uses ref
 
   const handleQuery = useCallback((id: string, q: string) => {
     setCards(prev => { const n = new Map(prev); const c = n.get(id); if (c) n.set(id, { ...c, query: q }); return n })
   }, [])
 
+  // FIX: handleDismiss also cleans the card out of queues to prevent poisoning
   const handleDismiss = useCallback((id: string) => {
     setCards(prev => { const n = new Map(prev); n.delete(id); return n })
-    setPositions(prev => { const n = new Map(prev); n.delete(id); return n })
+    positionsRef.current.delete(id)
     physicsRef.current?.removeNode(id)
     dragOverride.current.delete(id)
+    // Clean card from any queue to prevent stale entries
+    queues.current.forEach((q) => {
+      const idx = q.indexOf(id)
+      if (idx !== -1) q.splice(idx, 1)
+    })
   }, [])
 
-  // Drag handler — override physics position while dragging
   const handleDrag = useCallback((id: string, x: number, y: number) => {
     dragOverride.current.set(id, { x, y })
-    setPositions(prev => new Map(prev).set(id, { x, y }))
+    positionsRef.current.set(id, { x, y })
+    forceRender(n => n + 1)
   }, [])
 
   const handleDragEnd = useCallback((_id: string) => {
     // Keep drag override — user's manual position persists
-    // Physics won't move the card back
   }, [])
 
   return (
     <div className="fixed inset-0" style={{ pointerEvents: "none" }}>
       <AnimatePresence>
         {Array.from(cards.values()).map(card => {
-          const pos = positions.get(card.id) || { x: window.innerWidth / 2, y: window.innerHeight / 2 }
+          const pos = positionsRef.current.get(card.id) || { x: window.innerWidth - 400, y: 100 }
           return (
             <motion.div
               key={card.id}
@@ -414,7 +430,6 @@ const RadialLayout: React.FC<Props> = ({
               exit={{ opacity: 0, scale: 0.96 }}
               transition={{ type: "spring", stiffness: 100, damping: 18, mass: 2 }}
               onMouseDown={(e) => {
-                // Drag by header (top 32px)
                 const rect = e.currentTarget.getBoundingClientRect()
                 if (e.clientY - rect.top > 32) return
                 e.preventDefault()

@@ -233,11 +233,12 @@ export class ProcessingHelper {
     if (!promptBuilder) {
       throw new Error(`Unknown tool: ${toolName}`)
     }
-    const prompt = promptBuilder(args)
 
-    // Extract and inject transcript if provided
+    // Extract transcript BEFORE prompt builder sees args
     const transcript = args._transcript || ""
-    delete args._transcript  // clean up internal field
+    delete args._transcript
+
+    const prompt = promptBuilder(args)
 
     let fullPrompt = prompt
     if (transcript) {

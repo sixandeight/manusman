@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef, useCallback } from "react"
 import { useQuery } from "react-query"
 import ScreenshotQueue from "../components/Queue/ScreenshotQueue"
 import {
@@ -267,6 +267,24 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
     };
   }, [refetch]);
 
+  // Stable callback for tool submission — avoids recreating on every render
+  const handleToolSubmit = useCallback((toolName: string, args: Record<string, string>, screenshotPath?: string) => {
+    const doSubmit = async () => {
+      let transcript = ""
+      if (micChunksRef.current.length >= 8) {
+        try {
+          const blob = new Blob([...micChunksRef.current], { type: "audio/webm" })
+          const arrayBuffer = await blob.arrayBuffer()
+          transcript = await window.electronAPI.transcribeAudioBuffer(arrayBuffer, "audio/webm")
+        } catch (err) {
+          console.warn("[Mic] Transcription failed, proceeding without:", err)
+        }
+      }
+      window.electronAPI.runManusTool(toolName, { ...args, _transcript: transcript }, screenshotPath)
+    }
+    doSubmit()
+  }, []) // micChunksRef is a ref — stable
+
   const handleTooltipVisibilityChange = (visible: boolean, height: number) => {
     setIsTooltipVisible(visible)
     setTooltipHeight(height)
@@ -426,24 +444,7 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
         toolResults={toolResults}
         runningTools={runningTools}
         activeToolPrompt={activeToolPrompt}
-        onToolSubmit={(toolName, args, screenshotPath) => {
-          // Fire tool immediately — don't block on transcription
-          // Transcribe in background and attach if ready, otherwise skip
-          const doSubmit = async () => {
-            let transcript = ""
-            if (micChunksRef.current.length >= 8) { // need at least 2s of audio
-              try {
-                const blob = new Blob([...micChunksRef.current], { type: "audio/webm" })
-                const arrayBuffer = await blob.arrayBuffer()
-                transcript = await window.electronAPI.transcribeAudioBuffer(arrayBuffer, "audio/webm")
-              } catch (err) {
-                console.warn("[Mic] Transcription failed, proceeding without:", err)
-              }
-            }
-            window.electronAPI.runManusTool(toolName, { ...args, _transcript: transcript }, screenshotPath)
-          }
-          doSubmit()
-        }}
+        onToolSubmit={handleToolSubmit}
         onToolCancel={() => setActiveToolPrompt(null)}
         onDismissResult={(i) => setToolResults(prev => prev.filter((_, j) => j !== i))}
       />
