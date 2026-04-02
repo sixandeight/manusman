@@ -91,6 +91,7 @@ export class ManusHelper {
           "accept": "application/json",
           "content-type": "application/json",
           "API_KEY": this.apiKey,
+          "Authorization": `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify(body),
       })
@@ -101,8 +102,15 @@ export class ManusHelper {
       }
 
       const data = await response.json()
-      console.log(`[ManusHelper] Task created: ${data.taskId}`)
-      return { taskId: data.taskId, taskUrl: data.taskUrl }
+      console.log(`[ManusHelper] Raw create response:`, JSON.stringify(data))
+      // Handle different possible field names from Manus API
+      const taskId = data.taskId || data.task_id || data.id
+      const taskUrl = data.taskUrl || data.task_url || data.metadata?.task_url || ""
+      console.log(`[ManusHelper] Task created: ${taskId} (url: ${taskUrl})`)
+      if (!taskId) {
+        throw new Error(`Manus create response missing taskId. Got: ${JSON.stringify(data)}`)
+      }
+      return { taskId, taskUrl }
     } catch (error) {
       console.error("[ManusHelper] Error creating task:", error)
       throw error
@@ -110,11 +118,14 @@ export class ManusHelper {
   }
 
   public async getTaskStatus(taskId: string): Promise<ManusTaskStatus> {
-    const response = await fetch(`${this.baseUrl}/v1/tasks/${taskId}`, {
+    const url = `${this.baseUrl}/v1/tasks/${taskId}`
+    console.log(`[ManusHelper] Polling: ${url}`)
+    const response = await fetch(url, {
       method: "GET",
       headers: {
         "accept": "application/json",
         "API_KEY": this.apiKey,
+        "Authorization": `Bearer ${this.apiKey}`,
       },
     })
 
@@ -123,7 +134,14 @@ export class ManusHelper {
       throw new Error(`Manus status error: ${response.status} - ${errorBody}`)
     }
 
-    return await response.json()
+    const data = await response.json()
+
+    // Manus sometimes returns error objects with 200 status
+    if (data.code && data.message) {
+      throw new Error(`Manus API error: ${data.message} (code ${data.code})`)
+    }
+
+    return data
   }
 
   public async pollUntilComplete(
@@ -210,6 +228,9 @@ export class ManusHelper {
       agentProfile: "speed",
     })
 
+    // Small delay before first poll — Manus returns 404 if polled immediately
+    await this.sleep(2000)
+
     const result = await this.pollUntilComplete(taskId, onStatusUpdate, onPartialResult)
     return { ...result, taskUrl, toolName }
   }
@@ -221,6 +242,7 @@ export class ManusHelper {
         "accept": "application/json",
         "content-type": "application/json",
         "API_KEY": this.apiKey,
+        "Authorization": `Bearer ${this.apiKey}`,
       },
       body: JSON.stringify({
         taskId,
@@ -236,15 +258,33 @@ export class ManusHelper {
   }
 
   private parseTaskResult(taskId: string, status: ManusTaskStatus): ManusResult {
-    const textParts: string[] = []
     const files: Array<{ url: string; name: string; mimeType: string }> = []
+    let finalText = ""
 
     if (status.output) {
-      for (const message of status.output) {
-        if (message.role !== "assistant") continue
-        for (const block of message.content) {
+      const assistantMessages = status.output.filter(
+        m => m.role === "assistant" && m.content && m.content.length > 0
+      )
+
+      // Strategy: scan ALL assistant messages for JSON with a "display" field.
+      // Manus sometimes sends the JSON first, then a follow-up prose message.
+      // We want the JSON, not the prose.
+      let jsonText = ""
+      let lastPlainText = ""
+
+      for (const msg of assistantMessages) {
+        for (const block of msg.content) {
           if ((block.type === "output_text" || block.type === "text") && block.text) {
-            textParts.push(block.text)
+            const cleaned = block.text.trim().replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim()
+            try {
+              const parsed = JSON.parse(cleaned)
+              if (parsed.display) {
+                jsonText = block.text // found structured JSON with display field
+              }
+            } catch {
+              // not JSON — track as plain text fallback
+            }
+            lastPlainText = block.text
           }
           if (block.type === "output_file" && block.fileUrl) {
             files.push({
@@ -255,13 +295,16 @@ export class ManusHelper {
           }
         }
       }
+
+      // Prefer JSON with display field, fall back to last plain text
+      finalText = jsonText || lastPlainText
     }
 
     return {
       taskId,
       taskUrl: status.metadata?.task_url || "",
       status: "completed",
-      text: textParts.join("\n\n"),
+      text: finalText,
       files,
       raw: status,
     }

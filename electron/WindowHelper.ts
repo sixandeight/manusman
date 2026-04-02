@@ -64,10 +64,11 @@ export class WindowHelper {
     }
 
     this.mainWindow = new BrowserWindow(windowSettings)
-    // this.mainWindow.webContents.openDevTools()
+    // this.mainWindow.webContents.openDevTools({ mode: "detach" })
     this.mainWindow.setContentProtection(true)
 
     // Click-through: transparent areas pass clicks to apps underneath
+    // On Windows, forward:true sends mouse move events so CSS hover works
     this.mainWindow.setIgnoreMouseEvents(true, { forward: true })
 
     if (process.platform === "darwin") {

@@ -13,14 +13,12 @@ const isDevTest = process.env.IS_DEV_TEST === "true"
 const MOCK_API_WAIT_TIME = Number(process.env.MOCK_API_WAIT_TIME) || 500
 
 // System instructions prepended to every Manus prompt
-const MANUS_SYSTEM = `IMPORTANT RULES:
-- Do NOT ask clarifying questions. Do NOT wait for user input. Work with what you have.
-- Use your Notion connector integration to access Notion data. Do NOT open notion.so in a browser.
-- Use your Google Drive connector integration to access Google Drive. Do NOT open drive.google.com in a browser.
-- If an connector integration is not connected, say so and proceed with what you can find elsewhere.
-- Be concise. No filler.
+const MANUS_SYSTEM = `RULES:
+- Do NOT ask clarifying questions. Do NOT wait for user input.
+- If Notion or Google Drive connectors are not available, skip them silently and use web research instead. Do NOT mention missing connectors. Do NOT apologize. Just use the web.
+- Be concise. No filler. No disclaimers.
 
-OUTPUT: You have display skills installed. Use the one specified in the task to format your final answer. Your FINAL message must be ONLY the JSON from the skill schema, wrapped in \`\`\`json code fences. Earlier status messages can be freeform.`
+OUTPUT: You have display skills installed. Use the one specified in the task. Your FINAL message must be ONLY the JSON from the skill schema wrapped in \`\`\`json code fences. No other text in your final message.`
 
 // Prompt templates for each Manus tool — each references a specific display skill
 const TOOL_PROMPTS: Record<string, (args: Record<string, string>) => string> = {

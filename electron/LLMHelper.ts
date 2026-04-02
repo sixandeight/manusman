@@ -16,10 +16,19 @@ interface OllamaResponse {
 export class LLMHelper {
   private apiKey: string = ""
   private baseUrl: string = "https://api.moonshot.ai/v1"
-  private kimiModel: string = "moonshot-v1-8k"
-  private kimiVisionModel: string = "moonshot-v1-8k-vision-preview"
+  private kimiModel: string = "kimi-k2.5"
+  private kimiVisionModel: string = "kimi-k2.5"
 
-  private readonly systemPrompt = `You are Wingman AI, a helpful, proactive assistant for any kind of problem or situation (not just coding). For any user input, analyze the situation, provide a clear problem statement, relevant context, and suggest several possible responses or actions the user could take next. Always explain your reasoning. Present your suggestions as a list of options or next steps.`
+  private readonly systemPrompt = `You are Manusman, a business and consulting assistant. You analyze screenshots of conversations, emails, documents, and other business content.
+
+Rules:
+- Be concise. No filler, no fluff.
+- Be direct and casual in tone.
+- Be logical and precise — say exactly what you mean.
+- Lead with the answer, then context only if needed.
+- When suggesting actions, give max 3 concrete next steps.
+- Never repeat back what the user already knows.
+- Never explain your reasoning unless asked.`
 
   private useOllama: boolean = false
   private ollamaModel: string = "llama3.2"
@@ -51,17 +60,24 @@ export class LLMHelper {
 
   private async callKimi(messages: any[], useVision: boolean = false): Promise<string> {
     try {
+      const model = useVision ? this.kimiVisionModel : this.kimiModel
+      const isK25 = model.startsWith("kimi-k2")
+
+      // kimi-k2.5 has fixed params — temperature/top_p/n/penalties CANNOT be set
+      const body: Record<string, any> = { model, messages }
+      if (isK25) {
+        body.thinking = { type: "disabled" } // faster, no internal reasoning overhead
+      } else {
+        body.temperature = 0.7
+      }
+
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${this.apiKey}`,
         },
-        body: JSON.stringify({
-          model: useVision ? this.kimiVisionModel : this.kimiModel,
-          messages,
-          temperature: 0.7,
-        }),
+        body: JSON.stringify(body),
       })
 
       if (!response.ok) {
@@ -161,7 +177,7 @@ export class LLMHelper {
       })
       const imageParts = await Promise.all(imagePartsPromises)
 
-      const userPrompt = `You are a wingman. Please analyze these images and extract the following information in JSON format:\n{\n  "problem_statement": "A clear statement of the problem or situation depicted in the images.",\n  "context": "Relevant background or context from the images.",\n  "suggested_responses": ["First possible answer or action", "Second possible answer or action", "..."],\n  "reasoning": "Explanation of why these suggestions are appropriate."\n}\nImportant: Return ONLY the JSON object, without any markdown formatting or code blocks.`
+      const userPrompt = `Analyze these images and extract the following as JSON:\n{\n  "problem_statement": "What is the core situation or question here.",\n  "context": "Key people, companies, dates, or details visible.",\n  "suggested_responses": ["Action 1", "Action 2", "Action 3"],\n  "reasoning": "Why these actions make sense — one sentence."\n}\nReturn ONLY the JSON object. No markdown, no code blocks.`
 
       const messages = [
         { role: "system", content: this.systemPrompt },
@@ -183,7 +199,7 @@ export class LLMHelper {
   }
 
   public async generateSolution(problemInfo: any) {
-    const userPrompt = `Given this problem or situation:\n${JSON.stringify(problemInfo, null, 2)}\n\nPlease provide your response in the following JSON format:\n{\n  "solution": {\n    "code": "The code or main answer here.",\n    "problem_statement": "Restate the problem or situation.",\n    "context": "Relevant background/context.",\n    "suggested_responses": ["First possible answer or action", "Second possible answer or action", "..."],\n    "reasoning": "Explanation of why these suggestions are appropriate."\n  }\n}\nImportant: Return ONLY the JSON object, without any markdown formatting or code blocks.`
+    const userPrompt = `Given this situation:\n${JSON.stringify(problemInfo, null, 2)}\n\nRespond as JSON:\n{\n  "solution": {\n    "code": "Your direct answer or recommended response.",\n    "problem_statement": "The core issue in one sentence.",\n    "context": "Key details — people, companies, deadlines.",\n    "suggested_responses": ["Action 1", "Action 2", "Action 3"],\n    "reasoning": "Why — one sentence."\n  }\n}\nReturn ONLY the JSON object. No markdown, no code blocks.`
 
     console.log("[LLMHelper] Calling Kimi LLM for solution...")
     try {
@@ -210,7 +226,7 @@ export class LLMHelper {
       })
       const imageParts = await Promise.all(imagePartsPromises)
 
-      const userPrompt = `You are a wingman. Given:\n1. The original problem or situation: ${JSON.stringify(problemInfo, null, 2)}\n2. The current response or approach: ${currentCode}\n3. The debug information in the provided images\n\nPlease analyze the debug information and provide feedback in this JSON format:\n{\n  "solution": {\n    "code": "The code or main answer here.",\n    "problem_statement": "Restate the problem or situation.",\n    "context": "Relevant background/context.",\n    "suggested_responses": ["First possible answer or action", "Second possible answer or action", "..."],\n    "reasoning": "Explanation of why these suggestions are appropriate."\n  }\n}\nImportant: Return ONLY the JSON object, without any markdown formatting or code blocks.`
+      const userPrompt = `Given:\n1. Original situation: ${JSON.stringify(problemInfo, null, 2)}\n2. Current approach: ${currentCode}\n3. New context in the attached images\n\nRevise your answer based on the new information. Respond as JSON:\n{\n  "solution": {\n    "code": "Your revised answer or recommendation.",\n    "problem_statement": "Updated core issue — one sentence.",\n    "context": "What changed or what's new.",\n    "suggested_responses": ["Action 1", "Action 2", "Action 3"],\n    "reasoning": "Why the revision — one sentence."\n  }\n}\nReturn ONLY the JSON object. No markdown, no code blocks.`
 
       const messages = [
         { role: "system", content: this.systemPrompt },
@@ -277,7 +293,7 @@ export class LLMHelper {
           role: "user",
           content: [
             imagePart,
-            { type: "text", text: "Describe the content of this image in a short, concise answer. In addition to your main answer, suggest several possible actions or responses the user could take next based on the image. Be concise and brief." }
+            { type: "text", text: "Analyze this image. Identify what it shows — conversation, email, document, data, or other content. Give a brief summary and up to 3 actionable next steps. No filler." }
           ]
         }
       ]

@@ -1,97 +1,60 @@
 import React, { useEffect, useState, useCallback, useRef } from "react"
-import ToolResultCard from "./ToolResultCard"
+import PresetRenderer from "./PresetRenderer"
 
 // ── Position allocation ─────────────────────────────────
 
-interface CardPosition {
-  x: number
-  y: number
-  width: number
-  height: number
-}
+interface CardPosition { x: number; y: number; width: number; height: number }
 
-function findOpenPosition(
-  existing: Map<string, CardPosition>,
-  cardWidth: number,
-  cardHeight: number
-): { x: number; y: number } {
+function findOpenPosition(existing: Map<string, CardPosition>, w: number, h: number): { x: number; y: number } {
   const screenW = window.innerWidth
   const screenH = window.innerHeight
-  const padding = 16
-  const startX = screenW - cardWidth - padding * 3
-  const startY = padding * 4
+  const pad = 16
+  const startX = screenW - w - pad * 3
+  const startY = pad * 4
 
   for (let col = 0; col < 3; col++) {
     for (let row = 0; row < 6; row++) {
-      const x = startX - col * (cardWidth + padding)
-      const y = startY + row * (cardHeight + padding)
-      if (x < 0 || y + cardHeight > screenH) continue
-
-      const candidate = { x, y, width: cardWidth, height: cardHeight }
+      const x = startX - col * (w + pad)
+      const y = startY + row * (h + pad)
+      if (x < 0 || y + h > screenH) continue
       let overlaps = false
       for (const pos of existing.values()) {
-        if (
-          candidate.x < pos.x + pos.width + padding &&
-          candidate.x + candidate.width + padding > pos.x &&
-          candidate.y < pos.y + pos.height + padding &&
-          candidate.y + candidate.height + padding > pos.y
-        ) {
-          overlaps = true
-          break
+        if (x < pos.x + pos.width + pad && x + w + pad > pos.x && y < pos.y + pos.height + pad && y + h + pad > pos.y) {
+          overlaps = true; break
         }
       }
       if (!overlaps) return { x, y }
     }
   }
-
   return { x: startX - existing.size * 30, y: startY + existing.size * 30 }
 }
 
-// ── Card state ──────────────────────────────────────────
+// ── Types ───────────────────────────────────────────────
 
-type CardPhase = "input" | "pending" | "thinking" | "complete"
+type Phase = "input" | "pending" | "thinking" | "complete"
 
-interface FloatingCard {
+interface Card {
   id: string
   toolName: string
   needsScreenshot: boolean
-  phase: CardPhase
+  phase: Phase
   query: string
   result: any | null
   position: { x: number; y: number }
-  isDragging: boolean
 }
-
-// ── Colors + Labels ─────────────────────────────────────
 
 const TOOL_COLORS: Record<string, string> = {
-  who_is_this: "#7c3aed",
-  meeting_brief: "#059669",
-  live_fact_check: "#d97706",
-  company_snapshot: "#2563eb",
-  deal_status: "#ea580c",
-  competitive_intel: "#dc2626",
-  number_lookup: "#0891b2",
+  who_is_this: "#7c3aed", meeting_brief: "#059669", live_fact_check: "#d97706",
+  company_snapshot: "#2563eb", deal_status: "#ea580c", competitive_intel: "#dc2626", number_lookup: "#0891b2",
 }
-
 const TOOL_LABELS: Record<string, string> = {
-  who_is_this: "PERSON",
-  meeting_brief: "BRIEF",
-  live_fact_check: "FACT CHECK",
-  company_snapshot: "COMPANY",
-  deal_status: "DEAL",
-  competitive_intel: "INTEL",
-  number_lookup: "STAT",
+  who_is_this: "PERSON", meeting_brief: "BRIEF", live_fact_check: "FACT CHECK",
+  company_snapshot: "COMPANY", deal_status: "DEAL", competitive_intel: "INTEL", number_lookup: "STAT",
 }
-
 const INPUT_PLACEHOLDERS: Record<string, string> = {
-  who_is_this: "Extra context (optional)...",
-  meeting_brief: "Person or company name...",
-  live_fact_check: "Claim to verify...",
-  company_snapshot: "Company name...",
-  deal_status: "Client name...",
-  competitive_intel: "Competitor name...",
-  number_lookup: "What stat to find...",
+  who_is_this: "Extra context (optional)...", meeting_brief: "Person or company name...",
+  live_fact_check: "Claim to verify...", company_snapshot: "Company name...",
+  deal_status: "Client name...", competitive_intel: "Competitor name...", number_lookup: "What stat to find...",
 }
 
 function buildArgs(toolName: string, input: string): Record<string, string> {
@@ -107,166 +70,138 @@ function buildArgs(toolName: string, input: string): Record<string, string> {
   }
 }
 
-let cardCounter = 0
-function nextCardId(toolName: string): string {
-  cardCounter++
-  return `card-${toolName}-${cardCounter}-${Date.now()}`
-}
+let counter = 0
+function nextId(tool: string) { return `c-${tool}-${++counter}-${Date.now()}` }
 
-// ── Draggable wrapper ───────────────────────────────────
+// ── Draggable ───────────────────────────────────────────
 
-const DraggableCard: React.FC<{
-  position: { x: number; y: number }
-  onDragStart: () => void
+const Draggable: React.FC<{
+  pos: { x: number; y: number }
   onDrag: (x: number, y: number) => void
-  onDragEnd: () => void
   children: React.ReactNode
-}> = ({ position, onDragStart, onDrag, onDragEnd, children }) => {
-  const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null)
+}> = ({ pos, onDrag, children }) => {
+  const ref = useRef<{ sx: number; sy: number; ox: number; oy: number } | null>(null)
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+  const onDown = useCallback((e: React.MouseEvent) => {
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-    if (e.clientY - rect.top > 36) return
+    if (e.clientY - rect.top > 32) return
     e.preventDefault()
-    dragRef.current = { startX: e.clientX, startY: e.clientY, origX: position.x, origY: position.y }
-    onDragStart()
+    ref.current = { sx: e.clientX, sy: e.clientY, ox: pos.x, oy: pos.y }
     window.electronAPI.setIgnoreMouse(false)
-
-    const handleMove = (ev: MouseEvent) => {
-      if (!dragRef.current) return
-      onDrag(dragRef.current.origX + ev.clientX - dragRef.current.startX, dragRef.current.origY + ev.clientY - dragRef.current.startY)
-    }
-    const handleUp = () => {
-      dragRef.current = null
-      onDragEnd()
-      document.removeEventListener("mousemove", handleMove)
-      document.removeEventListener("mouseup", handleUp)
-    }
-    document.addEventListener("mousemove", handleMove)
-    document.addEventListener("mouseup", handleUp)
-  }, [position, onDragStart, onDrag, onDragEnd])
+    const move = (ev: MouseEvent) => { if (ref.current) onDrag(ref.current.ox + ev.clientX - ref.current.sx, ref.current.oy + ev.clientY - ref.current.sy) }
+    const up = () => { ref.current = null; document.removeEventListener("mousemove", move); document.removeEventListener("mouseup", up) }
+    document.addEventListener("mousemove", move)
+    document.addEventListener("mouseup", up)
+  }, [pos, onDrag])
 
   return (
-    <div
-      className="absolute"
-      style={{ left: `${position.x}px`, top: `${position.y}px`, pointerEvents: "auto", zIndex: 50 }}
-      onMouseDown={handleMouseDown}
+    <div className="absolute" style={{ left: pos.x, top: pos.y, pointerEvents: "auto", zIndex: 50 }}
+      onMouseDown={onDown}
       onMouseEnter={() => window.electronAPI.setIgnoreMouse(false)}
-      onMouseLeave={() => window.electronAPI.setIgnoreMouse(true)}
-    >
+      onMouseLeave={() => window.electronAPI.setIgnoreMouse(true)}>
       {children}
     </div>
   )
 }
 
-// ── Unified card — all four phases ──────────────────────
+// ── Card component ──────────────────────────────────────
 
-const UnifiedCard: React.FC<{
-  card: FloatingCard
-  onSubmit: (id: string, toolName: string, args: Record<string, string>, screenshotPath?: string) => void
+const CardView: React.FC<{
+  card: Card
+  onSubmit: (id: string, tool: string, args: Record<string, string>, screenshot?: string) => void
   onDismiss: (id: string) => void
-  onQueryChange: (id: string, query: string) => void
+  onQueryChange: (id: string, q: string) => void
 }> = ({ card, onSubmit, onDismiss, onQueryChange }) => {
   const color = TOOL_COLORS[card.toolName] || "#666"
   const label = TOOL_LABELS[card.toolName] || card.toolName
   const inputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    if (card.phase === "input") inputRef.current?.focus()
-  }, [card.phase])
+  useEffect(() => { if (card.phase === "input") inputRef.current?.focus() }, [card.phase])
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     const args = buildArgs(card.toolName, card.query)
-    let screenshotPath: string | undefined
-    if (card.needsScreenshot) {
-      screenshotPath = await window.electronAPI.getLastScreenshotPath() || undefined
-    }
-    onSubmit(card.id, card.toolName, args, screenshotPath)
+    let ss: string | undefined
+    if (card.needsScreenshot) ss = await window.electronAPI.getLastScreenshotPath() || undefined
+    onSubmit(card.id, card.toolName, args, ss)
   }
 
-  // Phase label text
-  const phaseText = {
-    input: "",
-    pending: "pending",
-    thinking: "thinking",
-    complete: "",
-  }[card.phase]
+  const phaseLabel = card.phase === "pending" ? "pending" : card.phase === "thinking" ? "thinking" : ""
 
-  // Shimmer speed
-  const shimmerSpeed = card.phase === "thinking" ? "1s" : "2.5s"
+  // Parse result JSON if complete
+  let parsed: any = null
+  if (card.phase === "complete" && card.result?.text) {
+    try {
+      const t = card.result.text.trim().replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim()
+      parsed = JSON.parse(t)
+    } catch {}
+  }
 
   return (
     <div
-      className="rounded-lg shadow-lg overflow-hidden"
+      className="rounded-xl overflow-hidden"
       style={{
-        background: "#ffffff",
+        background: "rgba(0, 0, 0, 0.75)",
         borderLeft: `3px solid ${color}`,
-        boxShadow: `0 2px 12px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)`,
-        minWidth: card.phase === "complete" ? "380px" : "280px",
-        maxWidth: "420px",
-        transition: "min-width 400ms ease",
+        boxShadow: `0 4px 24px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.06)`,
+        width: card.phase === "complete" ? 480 : 300,
+        transition: "width 400ms ease",
       }}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-3 pb-2 cursor-grab">
+      {/* Header — drag zone */}
+      <div className="flex items-center justify-between px-4 h-8 cursor-grab">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold uppercase tracking-widest" style={{ color }}>{label}</span>
-          {card.phase !== "input" && (
-            <span
-              className={`inline-block w-2 h-2 rounded-full ${card.phase === "thinking" || card.phase === "pending" ? "animate-pulse" : ""}`}
-              style={{
-                background: card.phase === "complete" ? "#16a34a" : card.phase === "thinking" ? "#d97706" : "#9ca3af",
-                boxShadow: `0 0 6px ${card.phase === "complete" ? "#16a34a66" : card.phase === "thinking" ? "#d9770644" : "#9ca3af44"}`,
-              }}
-            />
+          <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color }}>{label}</span>
+          {card.phase !== "input" && card.phase !== "complete" && (
+            <span className={`w-1.5 h-1.5 rounded-full ${card.phase === "thinking" ? "animate-pulse" : ""}`}
+              style={{ background: card.phase === "thinking" ? "#facc15" : "#888" }} />
+          )}
+          {card.phase === "complete" && (
+            <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#4ade80" }} />
           )}
         </div>
-        <button onClick={() => onDismiss(card.id)} className="text-gray-300 hover:text-gray-500 text-sm px-1">x</button>
+        <button onClick={() => onDismiss(card.id)} className="text-white/20 hover:text-white/40 text-xs leading-none">x</button>
       </div>
 
-      {/* Input phase */}
+      {/* Input */}
       {card.phase === "input" && (
-        <form onSubmit={handleSubmit} className="px-4 pb-3">
-          <input
-            ref={inputRef}
-            value={card.query}
-            onChange={(e) => onQueryChange(card.id, e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Escape") onDismiss(card.id) }}
-            placeholder={INPUT_PLACEHOLDERS[card.toolName] || "Enter query..."}
-            className="w-full px-3 py-2 text-sm text-gray-800 bg-gray-50 rounded-md border border-gray-200 focus:outline-none focus:border-gray-400 placeholder-gray-400"
-          />
+        <form onSubmit={submit} className="px-4 pb-3">
+          <input ref={inputRef} value={card.query}
+            onChange={e => onQueryChange(card.id, e.target.value)}
+            onKeyDown={e => { if (e.key === "Escape") onDismiss(card.id) }}
+            placeholder={INPUT_PLACEHOLDERS[card.toolName]}
+            className="w-full px-3 py-2 text-sm text-white bg-white/10 rounded-md border border-white/10 focus:outline-none focus:border-white/20 placeholder-white/30" />
         </form>
       )}
 
-      {/* Pending / Thinking phase */}
+      {/* Pending / Thinking */}
       {(card.phase === "pending" || card.phase === "thinking") && (
         <div className="px-4 pb-3">
-          {card.query && (
-            <div className="text-sm text-gray-500 mb-2">{card.query}</div>
-          )}
+          {card.query && <div className="text-sm text-white/50 mb-2">{card.query}</div>}
           <div className="flex items-center gap-3">
-            <div className="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
-              <div
-                className="h-full rounded-full"
-                style={{
-                  background: `linear-gradient(90deg, transparent, ${color}66, transparent)`,
-                  animation: `shimmer ${shimmerSpeed} ease-in-out infinite`,
-                  width: "100%",
-                }}
-              />
+            <div className="flex-1 h-1 rounded-full bg-white/10 overflow-hidden">
+              <div className="h-full rounded-full" style={{
+                background: `linear-gradient(90deg, transparent, ${color}88, transparent)`,
+                animation: `shimmer ${card.phase === "thinking" ? "1s" : "2.5s"} ease-in-out infinite`,
+                width: "100%",
+              }} />
             </div>
-            <span className="text-xs text-gray-400 shrink-0">{phaseText}</span>
+            <span className="text-[10px] text-white/30">{phaseLabel}</span>
           </div>
         </div>
       )}
 
-      {/* Complete phase */}
-      {card.phase === "complete" && card.result && (
-        <>
-          <div className="h-px w-full bg-gray-100" />
-          <ToolResultCard result={card.result} onDismiss={() => onDismiss(card.id)} _embedded />
-        </>
+      {/* Complete — render preset */}
+      {card.phase === "complete" && (
+        <div className="px-4 pb-4 pt-1">
+          {parsed?.display ? (
+            <PresetRenderer data={parsed} color={color} />
+          ) : (
+            <div className="text-sm text-white/70 leading-relaxed">
+              {card.result?.text?.substring(0, 500)}
+            </div>
+          )}
+        </div>
       )}
     </div>
   )
@@ -274,7 +209,7 @@ const UnifiedCard: React.FC<{
 
 // ── Main layout ─────────────────────────────────────────
 
-interface RadialLayoutProps {
+interface Props {
   toolResults: any[]
   runningTools: Map<string, string>
   activeToolPrompt: { toolName: string; needsScreenshot: boolean } | null
@@ -283,168 +218,106 @@ interface RadialLayoutProps {
   onDismissResult: (index: number) => void
 }
 
-const RadialLayout: React.FC<RadialLayoutProps> = ({
-  toolResults,
-  runningTools,
-  activeToolPrompt,
-  onToolSubmit,
-  onToolCancel,
-  onDismissResult,
+const RadialLayout: React.FC<Props> = ({
+  toolResults, runningTools, activeToolPrompt, onToolSubmit, onToolCancel, onDismissResult: _onDismissResult,
 }) => {
-  const [cards, setCards] = useState<Map<string, FloatingCard>>(new Map())
-  const positionsRef = useRef<Map<string, CardPosition>>(new Map())
-  // Map from running toolName+timestamp to card id, for matching results back
-  const pendingCardIds = useRef<Map<string, string>>(new Map())
+  const [cards, setCards] = useState<Map<string, Card>>(new Map())
+  const posRef = useRef<Map<string, CardPosition>>(new Map())
+  const queues = useRef<Map<string, string[]>>(new Map())
+  const processedResults = useRef<Set<string>>(new Set())
 
-  // New tool prompt → create a card in "input" phase
+  // New prompt → create input card
   useEffect(() => {
     if (!activeToolPrompt) return
-
-    const id = nextCardId(activeToolPrompt.toolName)
-    const pos = findOpenPosition(positionsRef.current, 280, 80)
-    positionsRef.current.set(id, { ...pos, width: 280, height: 80 })
-
-    setCards(prev => {
-      const next = new Map(prev)
-      next.set(id, {
-        id,
-        toolName: activeToolPrompt.toolName,
-        needsScreenshot: activeToolPrompt.needsScreenshot,
-        phase: "input",
-        query: "",
-        result: null,
-        position: pos,
-        isDragging: false,
-      })
-      return next
-    })
-
-    // Clear the prompt so it doesn't re-trigger
+    const id = nextId(activeToolPrompt.toolName)
+    const pos = findOpenPosition(posRef.current, 300, 80)
+    posRef.current.set(id, { ...pos, width: 300, height: 80 })
+    setCards(prev => new Map(prev).set(id, {
+      id, toolName: activeToolPrompt.toolName, needsScreenshot: activeToolPrompt.needsScreenshot,
+      phase: "input", query: "", result: null, position: pos,
+    }))
     onToolCancel()
   }, [activeToolPrompt])
 
-  // Track running tools status → update matching cards to thinking
+  // Running tools → update existing cards phase (don't create new ones)
   useEffect(() => {
-    runningTools.forEach((status, toolName) => {
-      const cardId = pendingCardIds.current.get(toolName)
-      if (!cardId) return
-
-      setCards(prev => {
-        const next = new Map(prev)
-        const card = next.get(cardId)
-        if (card && card.phase !== "complete") {
-          const phase = (status === "thinking" || status === "running") ? "thinking" : card.phase
-          next.set(cardId, { ...card, phase })
+    setCards(prev => {
+      const next = new Map(prev)
+      let changed = false
+      runningTools.forEach((status, toolName) => {
+        const q = queues.current.get(toolName)
+        if (!q) return
+        for (const cardId of q) {
+          const card = next.get(cardId)
+          if (card && (card.phase === "pending" || card.phase === "thinking")) {
+            const newPhase = (status === "thinking" || status === "running") ? "thinking" : card.phase
+            if (card.phase !== newPhase) {
+              next.set(cardId, { ...card, phase: newPhase as Phase })
+              changed = true
+            }
+          }
         }
-        return next
       })
+      return changed ? next : prev
     })
   }, [runningTools])
 
-  // Track final results → upgrade card to complete
+  // Results → upgrade EXISTING card to complete (don't create new card)
   useEffect(() => {
     if (toolResults.length === 0) return
 
     setCards(prev => {
       const next = new Map(prev)
+      let changed = false
 
       for (const result of toolResults) {
         if (result._partial) continue
+        const rKey = result.taskId || `${result.toolName}-${result.text?.substring(0, 20)}`
+        if (processedResults.current.has(rKey)) continue
+        processedResults.current.add(rKey)
 
-        // Find the card for this result
-        const cardId = pendingCardIds.current.get(result.toolName)
+        const q = queues.current.get(result.toolName)
+        const cardId = q?.shift()
         if (cardId && next.has(cardId)) {
           const card = next.get(cardId)!
-          positionsRef.current.set(cardId, { ...card.position, width: 380, height: 300 })
           next.set(cardId, { ...card, phase: "complete", result })
-          pendingCardIds.current.delete(result.toolName)
-        } else {
-          // No matching card — create one directly
-          const id = nextCardId(result.toolName)
-          const pos = findOpenPosition(positionsRef.current, 380, 300)
-          positionsRef.current.set(id, { ...pos, width: 380, height: 300 })
-          next.set(id, {
-            id, toolName: result.toolName, needsScreenshot: false,
-            phase: "complete", query: "", result,
-            position: pos, isDragging: false,
-          })
+          posRef.current.set(cardId, { ...card.position, width: 480, height: 300 })
+          changed = true
         }
       }
-      return next
+
+      return changed ? next : prev
     })
   }, [toolResults])
 
-  // Submit handler — transitions card from input → pending, fires API call
-  const handleSubmit = useCallback((cardId: string, toolName: string, args: Record<string, string>, screenshotPath?: string) => {
-    // Track this card as pending for this toolName
-    pendingCardIds.current.set(toolName, cardId)
-
-    setCards(prev => {
-      const next = new Map(prev)
-      const card = next.get(cardId)
-      if (card) {
-        next.set(cardId, { ...card, phase: "pending" })
-      }
-      return next
-    })
-
-    // Fire the actual Manus call
-    onToolSubmit(toolName, args, screenshotPath)
+  const handleSubmit = useCallback((cardId: string, toolName: string, args: Record<string, string>, screenshot?: string) => {
+    const q = queues.current.get(toolName) || []
+    q.push(cardId)
+    queues.current.set(toolName, q)
+    setCards(prev => { const n = new Map(prev); const c = n.get(cardId); if (c) n.set(cardId, { ...c, phase: "pending" }); return n })
+    onToolSubmit(toolName, args, screenshot)
   }, [onToolSubmit])
 
-  const handleQueryChange = useCallback((id: string, query: string) => {
-    setCards(prev => {
-      const next = new Map(prev)
-      const card = next.get(id)
-      if (card) next.set(id, { ...card, query })
-      return next
-    })
+  const handleQuery = useCallback((id: string, q: string) => {
+    setCards(prev => { const n = new Map(prev); const c = n.get(id); if (c) n.set(id, { ...c, query: q }); return n })
   }, [])
 
   const handleDrag = useCallback((id: string, x: number, y: number) => {
-    setCards(prev => {
-      const next = new Map(prev)
-      const card = next.get(id)
-      if (card) {
-        next.set(id, { ...card, position: { x, y } })
-        const pos = positionsRef.current.get(id)
-        if (pos) positionsRef.current.set(id, { ...pos, x, y })
-      }
-      return next
-    })
+    setCards(prev => { const n = new Map(prev); const c = n.get(id); if (c) n.set(id, { ...c, position: { x, y } }); return n })
+    const p = posRef.current.get(id); if (p) posRef.current.set(id, { ...p, x, y })
   }, [])
 
   const handleDismiss = useCallback((id: string) => {
-    setCards(prev => {
-      const next = new Map(prev)
-      next.delete(id)
-      positionsRef.current.delete(id)
-      return next
-    })
-    const card = cards.get(id)
-    if (card?.result) {
-      const idx = toolResults.findIndex(r => r.taskId === card.result.taskId)
-      if (idx !== -1) onDismissResult(idx)
-    }
-  }, [cards, toolResults, onDismissResult])
+    setCards(prev => { const n = new Map(prev); n.delete(id); return n })
+    posRef.current.delete(id)
+  }, [])
 
   return (
     <div className="fixed inset-0" style={{ pointerEvents: "none" }}>
       {Array.from(cards.values()).map(card => (
-        <DraggableCard
-          key={card.id}
-          position={card.position}
-          onDragStart={() => setCards(prev => { const n = new Map(prev); const c = n.get(card.id); if (c) n.set(card.id, { ...c, isDragging: true }); return n })}
-          onDrag={(x, y) => handleDrag(card.id, x, y)}
-          onDragEnd={() => setCards(prev => { const n = new Map(prev); const c = n.get(card.id); if (c) n.set(card.id, { ...c, isDragging: false }); return n })}
-        >
-          <UnifiedCard
-            card={card}
-            onSubmit={handleSubmit}
-            onDismiss={handleDismiss}
-            onQueryChange={handleQueryChange}
-          />
-        </DraggableCard>
+        <Draggable key={card.id} pos={card.position} onDrag={(x, y) => handleDrag(card.id, x, y)}>
+          <CardView card={card} onSubmit={handleSubmit} onDismiss={handleDismiss} onQueryChange={handleQuery} />
+        </Draggable>
       ))}
     </div>
   )
