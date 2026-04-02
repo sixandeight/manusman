@@ -157,21 +157,29 @@ export class PhysicsEngine {
       .force("charge", forceManyBody<PhysicsNode>().strength(-60).distanceMax(400))
       .force("collide", forceCollide<PhysicsNode>().radius(d => Math.sqrt(d.width ** 2 + d.height ** 2) / 2 + 16))
       .force("link", forceLink<PhysicsNode, PhysicsLink>().id(d => d.id).distance(120).strength(0.3))
-      .force("zoneX", forceX<PhysicsNode>().x(d => getZoneTarget(d.zone, screenW, screenH).x).strength(0.12))
-      .force("zoneY", forceY<PhysicsNode>().y(d => getZoneTarget(d.zone, screenW, screenH).y).strength(0.12))
-      // Repel from center — use zone target to push toward assigned edge
-      // (zone gravity already does this, but we add extra push for cards near center)
-      .force("centerRepelX", forceX<PhysicsNode>().x(d => {
-        const zoneTarget = getZoneTarget(d.zone, screenW, screenH)
-        return zoneTarget.x // always push toward zone, not toward a side based on current position
-      }).strength(0.08))
-      .force("centerRepelY", forceY<PhysicsNode>().y(d => {
-        const zoneTarget = getZoneTarget(d.zone, screenW, screenH)
-        return zoneTarget.y
-      }).strength(0.08))
+      .force("zoneX", forceX<PhysicsNode>().x(d => getZoneTarget(d.zone, screenW, screenH).x).strength(0.15))
+      .force("zoneY", forceY<PhysicsNode>().y(d => getZoneTarget(d.zone, screenW, screenH).y).strength(0.15))
       .on("tick", () => {
+        const cx = screenW / 2
+        const cy = screenH / 2
+        const deadZoneW = screenW * 0.3 // center 30% of screen width
+        const deadZoneH = screenH * 0.3 // center 30% of screen height
+
         const positions = new Map<string, { x: number; y: number }>()
         for (const node of this.nodes) {
+          // Center repulsion — push cards away from the middle zone
+          const dx = (node.x || 0) - cx
+          const dy = (node.y || 0) - cy
+          const distX = Math.abs(dx)
+          const distY = Math.abs(dy)
+
+          // If card is inside the dead zone, push it outward
+          if (distX < deadZoneW / 2 && distY < deadZoneH / 2) {
+            const pushStrength = 2
+            node.vx = (node.vx || 0) + (dx > 0 ? pushStrength : -pushStrength)
+            node.vy = (node.vy || 0) + (dy > 0 ? pushStrength : -pushStrength)
+          }
+
           const x = Math.max(16, Math.min(this.screenW - node.width - 16, node.x || 0))
           const y = Math.max(16, Math.min(this.screenH - node.height - 16, node.y || 0))
           node.x = x
