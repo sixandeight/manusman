@@ -15,33 +15,35 @@ const MOCK_API_WAIT_TIME = Number(process.env.MOCK_API_WAIT_TIME) || 500
 // System instructions prepended to every Manus prompt
 const MANUS_SYSTEM = `IMPORTANT RULES:
 - Do NOT ask clarifying questions. Do NOT wait for user input. Work with what you have.
-- Use your Notion MCP integration to access Notion data. Do NOT open notion.so in a browser.
-- Use your Google Drive MCP integration to access Google Drive. Do NOT open drive.google.com in a browser.
-- If an MCP integration is not connected, say so and proceed with what you can find elsewhere.
-- Be concise. Return structured, actionable information. No filler.`
+- Use your Notion connector integration to access Notion data. Do NOT open notion.so in a browser.
+- Use your Google Drive connector integration to access Google Drive. Do NOT open drive.google.com in a browser.
+- If an connector integration is not connected, say so and proceed with what you can find elsewhere.
+- Be concise. No filler.
 
-// Prompt templates for each Manus tool
+OUTPUT: You have display skills installed. Use the one specified in the task to format your final answer. Your FINAL message must be ONLY the JSON from the skill schema, wrapped in \`\`\`json code fences. Earlier status messages can be freeform.`
+
+// Prompt templates for each Manus tool — each references a specific display skill
 const TOOL_PROMPTS: Record<string, (args: Record<string, string>) => string> = {
   who_is_this: (args) =>
-    `${MANUS_SYSTEM}\n\nTASK: Look up this person. Return: name, company, role, past interactions or notes from Notion, deal stage if applicable. Also search the web.\n\nContext: ${args.context || "See attached screenshot"}${args.name ? `\nName: ${args.name}` : ""}${args.company ? `\nCompany: ${args.company}` : ""}`,
+    `${MANUS_SYSTEM}\n\nTASK: Look up this person. Search Notion connector and the web for: name, company, role, past interactions, deal stage.\n\nUse /display-profile to format your answer.\n\nContext: ${args.context || "See attached screenshot"}${args.name ? `\nName: ${args.name}` : ""}${args.company ? `\nCompany: ${args.company}` : ""}`,
 
   meeting_brief: (args) =>
-    `${MANUS_SYSTEM}\n\nTASK: Prepare a concise meeting brief for: ${args.person_or_company}\n\nUse Notion MCP to pull: last meeting notes, open action items, relationship history. Use Google Drive MCP for any recent shared documents.\n\nReturn a structured brief: key points, open items, suggested talking points.${args.meeting_topic ? `\nMeeting topic: ${args.meeting_topic}` : ""}`,
+    `${MANUS_SYSTEM}\n\nTASK: Prepare a meeting brief for: ${args.person_or_company}\n\nUse Notion connector for: last meeting notes, open action items, relationship history. Use Google Drive connector for recent shared documents.\n\nUse /display-checklist to format your answer.${args.meeting_topic ? `\nMeeting topic: ${args.meeting_topic}` : ""}`,
 
   live_fact_check: (args) =>
-    `${MANUS_SYSTEM}\n\nTASK: Fact-check this claim. Check Google Drive MCP, Notion MCP, and the web. Return: accurate / partially true / false, with the source.\n\nClaim: ${args.claim}${args.source_context ? `\nSource: ${args.source_context}` : ""}`,
+    `${MANUS_SYSTEM}\n\nTASK: Fact-check this claim using Google Drive connector, Notion connector, and the web.\n\nUse /display-verdict to format your answer.\n\nClaim: ${args.claim}${args.source_context ? `\nSource: ${args.source_context}` : ""}`,
 
   company_snapshot: (args) =>
-    `${MANUS_SYSTEM}\n\nTASK: Research "${args.company_name}". Return: size, funding, recent news, industry, key people. Check Notion MCP for past interactions or deals.${args.specific_focus ? `\nFocus on: ${args.specific_focus}` : ""}`,
+    `${MANUS_SYSTEM}\n\nTASK: Research "${args.company_name}". Find: type, founded, size, funding, industry, key people, recent news. Check Notion connector for past interactions.\n\nUse /display-stat-card if the answer is primarily one key metric, or /display-comparison if comparing, otherwise use /display-chart if there is meaningful trend data, or /display-stat-card as default.${args.specific_focus ? `\nFocus on: ${args.specific_focus}` : ""}`,
 
   deal_status: (args) =>
-    `${MANUS_SYSTEM}\n\nTASK: Check deal status for "${args.client_name}" using Notion MCP. Return: pipeline stage, last interaction date, blockers, next actions, recent activity.`,
+    `${MANUS_SYSTEM}\n\nTASK: Check deal status for "${args.client_name}" using Notion connector. Find: pipeline stage, last interaction, blockers, next actions, deal value.\n\nUse /display-pipeline to format your answer.`,
 
   competitive_intel: (args) =>
-    `${MANUS_SYSTEM}\n\nTASK: Competitive intel on "${args.competitor_name}". Check Google Drive MCP and Notion MCP for past comparisons and win/loss data. Search web for latest positioning.\n\nReturn: key differentiators, strengths/weaknesses vs us, recent moves.${args.comparison_context ? `\nFocus: ${args.comparison_context}` : ""}${args.our_product ? `\nOur product: ${args.our_product}` : ""}`,
+    `${MANUS_SYSTEM}\n\nTASK: Competitive intel on "${args.competitor_name}". Check Google Drive connector and Notion connector for past comparisons. Search web for latest positioning.\n\nUse /display-comparison to format your answer.${args.comparison_context ? `\nFocus: ${args.comparison_context}` : ""}${args.our_product ? `\nOur product: ${args.our_product}` : ""}`,
 
   number_lookup: (args) =>
-    `${MANUS_SYSTEM}\n\nTASK: Find this number/stat using Google Drive MCP and Notion MCP: "${args.query}"${args.time_period ? `\nTime period: ${args.time_period}` : ""}${args.source_hint ? `\nLook in: ${args.source_hint}` : ""}\n\nReturn just the number with its source.`,
+    `${MANUS_SYSTEM}\n\nTASK: Find this number/stat using Google Drive connector and Notion connector: "${args.query}"\n\nUse /display-stat-card to format your answer. If there is trend data over time, include it in the trend array.${args.time_period ? `\nTime period: ${args.time_period}` : ""}${args.source_hint ? `\nLook in: ${args.source_hint}` : ""}`,
 }
 
 export type ManusToolName = "who_is_this" | "meeting_brief" | "live_fact_check" | "company_snapshot" | "deal_status" | "competitive_intel" | "number_lookup"
@@ -240,6 +242,9 @@ export class ProcessingHelper {
       }
     }
 
+    console.log(`[ProcessingHelper] Running Manus tool: ${toolName}`, JSON.stringify(args))
+    console.log(`[ProcessingHelper] Prompt: ${prompt.substring(0, 200)}...`)
+
     // Notify renderer that a tool is running
     if (mainWindow) {
       mainWindow.webContents.send("manus-tool-started", { toolName, args })
@@ -251,17 +256,20 @@ export class ProcessingHelper {
         prompt,
         attachments,
         (status) => {
+          console.log(`[ProcessingHelper] Manus ${toolName} status: ${status}`)
           if (mainWindow) {
             mainWindow.webContents.send("manus-tool-status", { toolName, status })
           }
         },
         (partial) => {
-          // Progressive results — send partial text as Manus works
+          console.log(`[ProcessingHelper] Manus ${toolName} partial: ${partial.text?.substring(0, 100)}...`)
           if (mainWindow) {
             mainWindow.webContents.send("manus-tool-partial", { ...partial, toolName })
           }
         }
       )
+
+      console.log(`[ProcessingHelper] Manus ${toolName} COMPLETED: ${result.text?.substring(0, 200)}...`)
 
       // Send final result to renderer
       if (mainWindow) {
@@ -270,6 +278,7 @@ export class ProcessingHelper {
 
       return result
     } catch (error: any) {
+      console.error(`[ProcessingHelper] Manus ${toolName} FAILED:`, error.message)
       if (mainWindow) {
         mainWindow.webContents.send("manus-tool-error", { toolName, error: error.message })
       }
