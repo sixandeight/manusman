@@ -151,23 +151,24 @@ export class PhysicsEngine {
     this.onTick = onTick
 
     this.simulation = forceSimulation<PhysicsNode, PhysicsLink>()
-      .velocityDecay(0.2)
+      .velocityDecay(0.35)
       .alphaDecay(0.008)
       .alphaTarget(0.03)
       .force("charge", forceManyBody<PhysicsNode>().strength(-60).distanceMax(400))
       .force("collide", forceCollide<PhysicsNode>().radius(d => Math.sqrt(d.width ** 2 + d.height ** 2) / 2 + 16))
       .force("link", forceLink<PhysicsNode, PhysicsLink>().id(d => d.id).distance(120).strength(0.3))
-      .force("zoneX", forceX<PhysicsNode>().x(d => getZoneTarget(d.zone, screenW, screenH).x).strength(0.15))
-      .force("zoneY", forceY<PhysicsNode>().y(d => getZoneTarget(d.zone, screenW, screenH).y).strength(0.15))
-      // Repel from center — keep the middle of the screen clear
+      .force("zoneX", forceX<PhysicsNode>().x(d => getZoneTarget(d.zone, screenW, screenH).x).strength(0.12))
+      .force("zoneY", forceY<PhysicsNode>().y(d => getZoneTarget(d.zone, screenW, screenH).y).strength(0.12))
+      // Repel from center — use zone target to push toward assigned edge
+      // (zone gravity already does this, but we add extra push for cards near center)
       .force("centerRepelX", forceX<PhysicsNode>().x(d => {
-        const cx = screenW / 2
-        return (d.x || 0) < cx ? screenW * 0.2 : screenW * 0.8
-      }).strength(0.03))
+        const zoneTarget = getZoneTarget(d.zone, screenW, screenH)
+        return zoneTarget.x // always push toward zone, not toward a side based on current position
+      }).strength(0.08))
       .force("centerRepelY", forceY<PhysicsNode>().y(d => {
-        const cy = screenH / 2
-        return (d.y || 0) < cy ? screenH * 0.2 : screenH * 0.8
-      }).strength(0.03))
+        const zoneTarget = getZoneTarget(d.zone, screenW, screenH)
+        return zoneTarget.y
+      }).strength(0.08))
       .on("tick", () => {
         const positions = new Map<string, { x: number; y: number }>()
         for (const node of this.nodes) {
@@ -217,7 +218,7 @@ export class PhysicsEngine {
     this.nodeZones.delete(id)
     this.simulation.nodes(this.nodes)
     ;(this.simulation.force("link") as any)?.links(this.links)
-    this.simulation.alpha(0.3).restart()
+    this.simulation.alpha(0.1).restart()
   }
 
   public updateNodeSize(id: string, width: number, height: number): void {
@@ -225,7 +226,8 @@ export class PhysicsEngine {
     if (node) {
       node.width = width
       node.height = height
-      this.simulation.alpha(0.2).restart()
+      // Gentle nudge — don't jolt everything when a card expands
+      this.simulation.alpha(0.05).restart()
     }
   }
 
