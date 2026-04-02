@@ -155,7 +155,7 @@ export class PhysicsEngine {
       .alphaDecay(0.008)
       .alphaTarget(0.03)
       .force("charge", forceManyBody<PhysicsNode>().strength(-60).distanceMax(400))
-      .force("collide", forceCollide<PhysicsNode>().radius(d => Math.max(d.width, d.height) / 2 + 16))
+      .force("collide", forceCollide<PhysicsNode>().radius(d => Math.sqrt(d.width ** 2 + d.height ** 2) / 2 + 16))
       .force("link", forceLink<PhysicsNode, PhysicsLink>().id(d => d.id).distance(120).strength(0.3))
       .force("zoneX", forceX<PhysicsNode>().x(d => getZoneTarget(d.zone, screenW, screenH).x).strength(0.05))
       .force("zoneY", forceY<PhysicsNode>().y(d => getZoneTarget(d.zone, screenW, screenH).y).strength(0.05))
