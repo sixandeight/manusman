@@ -225,6 +225,18 @@ export function initializeIpcHandlers(appState: AppState): void {
     return queue.length > 0 ? queue[queue.length - 1] : null
   })
 
+  // Transcription — receive audio buffer from renderer, return transcript
+  ipcMain.handle("transcribe-audio-buffer", async (_, audioData: ArrayBuffer, mimeType: string) => {
+    try {
+      const buffer = Buffer.from(audioData)
+      const transcript = await appState.processingHelper.getTranscriptionHelper().transcribe(buffer, mimeType)
+      return transcript
+    } catch (error: any) {
+      console.error("Error transcribing audio:", error)
+      return ""
+    }
+  })
+
   ipcMain.handle("test-llm-connection", async () => {
     try {
       const llmHelper = appState.processingHelper.getLLMHelper();

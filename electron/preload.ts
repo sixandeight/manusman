@@ -48,6 +48,7 @@ interface ElectronAPI {
   // Manus Tools
   runManusTool: (toolName: string, args: Record<string, string>, screenshotPath?: string) => Promise<any>
   getLastScreenshotPath: () => Promise<string | null>
+  transcribeAudioBuffer: (audioData: ArrayBuffer, mimeType: string) => Promise<string>
   onManusToolPrompt: (callback: (data: { toolName: string; needsScreenshot: boolean }) => void) => () => void
   onManusToolStarted: (callback: (data: { toolName: string; args: Record<string, string> }) => void) => () => void
   onManusToolStatus: (callback: (data: { toolName: string; status: string }) => void) => () => void
@@ -206,6 +207,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
   runManusTool: (toolName: string, args: Record<string, string>, screenshotPath?: string) =>
     ipcRenderer.invoke("run-manus-tool", toolName, args, screenshotPath),
   getLastScreenshotPath: () => ipcRenderer.invoke("get-last-screenshot-path"),
+  // Transcription
+  transcribeAudioBuffer: (audioData: ArrayBuffer, mimeType: string) =>
+    ipcRenderer.invoke("transcribe-audio-buffer", audioData, mimeType),
   onManusToolPrompt: (callback: (data: { toolName: string; needsScreenshot: boolean }) => void) => {
     const sub = (_: any, data: any) => callback(data)
     ipcRenderer.on("manus-tool-prompt", sub)

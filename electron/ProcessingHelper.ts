@@ -3,6 +3,7 @@
 import { AppState } from "./main"
 import { LLMHelper } from "./LLMHelper"
 import { ManusHelper, ManusResult } from "./ManusHelper"
+import { TranscriptionHelper } from "./TranscriptionHelper"
 import fs from "fs"
 import dotenv from "dotenv"
 
@@ -50,6 +51,7 @@ export class ProcessingHelper {
   private appState: AppState
   private llmHelper: LLMHelper
   private manusHelper: ManusHelper
+  private transcriptionHelper: TranscriptionHelper
   private currentProcessingAbortController: AbortController | null = null
   private currentExtraProcessingAbortController: AbortController | null = null
 
@@ -58,6 +60,9 @@ export class ProcessingHelper {
 
     // Initialize Manus
     this.manusHelper = new ManusHelper()
+
+    // Initialize Transcription
+    this.transcriptionHelper = new TranscriptionHelper()
 
     // Check if user wants to use Ollama
     const useOllama = process.env.USE_OLLAMA === "true"
@@ -210,6 +215,10 @@ export class ProcessingHelper {
 
   public getManusHelper() {
     return this.manusHelper;
+  }
+
+  public getTranscriptionHelper() {
+    return this.transcriptionHelper
   }
 
   public async runManusTool(
