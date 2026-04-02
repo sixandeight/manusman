@@ -34,6 +34,12 @@ export class TranscriptionHelper {
       return ""
     }
 
+    // Need at least ~10KB for a valid audio file with enough speech
+    if (audioBuffer.length < 10000) {
+      console.log(`[TranscriptionHelper] Buffer too small (${audioBuffer.length} bytes), skipping`)
+      return ""
+    }
+
     const ext = mimeType.includes("webm") ? ".webm" : mimeType.includes("mp4") ? ".mp4" : ".webm"
     const tmpPath = path.join(os.tmpdir(), `manusman-mic-${Date.now()}${ext}`)
 

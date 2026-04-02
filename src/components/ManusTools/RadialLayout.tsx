@@ -72,7 +72,7 @@ const FADE_DURATION = 15000 // 15s fade
 
 function useAutoFade(
   phase: Phase,
-  onDelete: () => void,
+  onDeleteRef: React.MutableRefObject<() => void>,
 ): { opacity: number; onHover: () => void; onLeave: () => void } {
   const [opacity, setOpacity] = useState(1)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -90,7 +90,6 @@ function useAutoFade(
   const startFadeTimer = useCallback(() => {
     clearTimers()
     timerRef.current = setTimeout(() => {
-      // Begin fade
       fadeStartRef.current = Date.now()
       const tick = () => {
         if (hoveredRef.current) return
@@ -98,22 +97,22 @@ function useAutoFade(
         const progress = Math.min(elapsed / FADE_DURATION, 1)
         setOpacity(1 - progress)
         if (progress >= 1) {
-          onDelete()
+          onDeleteRef.current()
         } else {
           rafRef.current = requestAnimationFrame(tick)
         }
       }
       tick()
     }, FADE_DELAY)
-  }, [clearTimers, onDelete])
+  }, [clearTimers, onDeleteRef])
 
-  // Start timer when phase becomes complete
+  // Start timer when phase becomes complete — only trigger on phase change
   useEffect(() => {
     if (phase === "complete") {
       startFadeTimer()
     }
     return clearTimers
-  }, [phase, startFadeTimer, clearTimers])
+  }, [phase]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const onHover = useCallback(() => {
     hoveredRef.current = true
@@ -143,7 +142,11 @@ const CardView: React.FC<{
   const label = TOOL_LABELS[card.toolName] || card.toolName
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const { opacity, onHover, onLeave } = useAutoFade(card.phase, () => onDismiss(card.id))
+  // Stable ref for delete callback — avoids stale closure in useAutoFade
+  const onDeleteRef = useRef(() => onDismiss(card.id))
+  onDeleteRef.current = () => onDismiss(card.id)
+
+  const { opacity, onHover, onLeave } = useAutoFade(card.phase, onDeleteRef)
 
   useEffect(() => { if (card.phase === "input") inputRef.current?.focus() }, [card.phase])
 
@@ -387,8 +390,9 @@ const RadialLayout: React.FC<Props> = ({
     setPositions(prev => new Map(prev).set(id, { x, y }))
   }, [])
 
-  const handleDragEnd = useCallback((id: string) => {
-    dragOverride.current.delete(id)
+  const handleDragEnd = useCallback((_id: string) => {
+    // Keep drag override — user's manual position persists
+    // Physics won't move the card back
   }, [])
 
   return (
