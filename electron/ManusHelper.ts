@@ -225,7 +225,7 @@ export class ManusHelper {
 
     const { taskId, taskUrl } = await this.createTask(prompt, attachments, {
       taskMode: "agent",
-      agentProfile: "speed",
+      agentProfile: "agent",
     })
 
     // Small delay before first poll — Manus returns 404 if polled immediately

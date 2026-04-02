@@ -13,60 +13,44 @@ const isDev = process.env.NODE_ENV === "development"
 const isDevTest = process.env.IS_DEV_TEST === "true"
 const MOCK_API_WAIT_TIME = Number(process.env.MOCK_API_WAIT_TIME) || 500
 
-// System instructions prepended to every Manus prompt
-const MANUS_SYSTEM = `CRITICAL RULES:
-1. Do NOT ask clarifying questions. Do NOT wait for user input. Just do the task.
-2. If Notion or Google Drive connectors are not available, skip them silently. Use web research instead. Do NOT mention missing connectors.
-3. Be concise. No filler. No disclaimers. No preamble.
-4. MANDATORY OUTPUT FORMAT: Your FINAL message must contain ONLY a JSON object wrapped in \`\`\`json code fences. NO prose before or after. NO explanations. NO "here is your result". JUST the JSON block. If your final message contains ANY text outside the code fence, you have FAILED the task.
+// Few-shot system prompt — experimentally proven to produce the most reliable JSON output
+// Key findings: mode "agent" is faster+cheaper than "speed", few-shot beats verbose schemas
+const MANUS_SYSTEM = `You are a JSON API. You research the question, then output ONLY raw JSON. No markdown, no code fences, no prose.
 
-AVAILABLE DISPLAY FORMATS — pick the one that BEST represents your findings:
+Pick the display format that best fits your findings:
 
-A) stat_card — for a single key number/metric:
-{ "display": "stat_card", "value": "string", "label": "string", "unit": "string?", "trend": [number]?, "sentiment": "positive|negative|neutral", "source": "string?", "context": "string?" }
+stat_card: {"display":"stat_card","value":"$3.4T","label":"Apple Market Cap","sentiment":"positive","trend":[2.1,2.5,2.8,3.4],"source":"Yahoo Finance"}
+comparison: {"display":"comparison","us_name":"Us","them_name":"Competitor","metrics":[{"label":"Price","us_score":8,"them_score":6}],"verdict":"We lead on price"}
+profile: {"display":"profile","name":"John","role":"CEO","company":"Acme","details":["Founded 2020","50 employees"],"sentiment":"positive","summary":"Growing fast"}
+verdict: {"display":"verdict","claim":"X is true","verdict":"true","confidence":"high","evidence":"Source confirms X","source":"Reuters"}
+checklist: {"display":"checklist","title":"Meeting Brief","context":[{"text":"Key fact","priority":"high"}],"items":[{"text":"Discuss pricing","checked":false}]}
+pipeline: {"display":"pipeline","client":"Acme","stages":["Lead","Qualified","Proposal","Negotiation","Closed"],"current_stage":2,"deal_value":"$500K","risk":"medium","next_action":"Send proposal"}
+chart: {"display":"chart","chart_type":"bar","title":"Revenue by Year","datasets":[{"name":"Revenue","values":[10,15,22,31],"color":"blue"}],"labels":["2021","2022","2023","2024"]}
 
-B) comparison — for comparing two entities across metrics:
-{ "display": "comparison", "us_name": "string", "them_name": "string", "metrics": [{ "label": "string", "us_score": 1-10, "them_score": 1-10, "us_note": "string?", "them_note": "string?" }], "verdict": "string", "actions": ["string"] }
+Rules: No clarifying questions. No waiting. If connectors unavailable, use web. No apologies.`
 
-C) profile — for a person or company overview:
-{ "display": "profile", "name": "string", "role": "string", "company": "string", "details": ["string"], "deal_stage": "lead|qualified|proposal|negotiation|closed_won"?, "deal_value": "string?", "last_contact": "string?", "sentiment": "positive|negative|neutral", "summary": "string", "actions": ["string"] }
-
-D) verdict — for fact-checking or yes/no determinations:
-{ "display": "verdict", "claim": "string", "verdict": "true|false|partially_true|unverifiable", "confidence": "high|medium|low", "evidence": "string", "source": "string?", "context": "string?" }
-
-E) checklist — for briefs, action items, or structured lists:
-{ "display": "checklist", "title": "string", "subtitle": "string?", "context": [{ "text": "string", "priority": "high|medium|low" }], "items": [{ "text": "string", "checked": false }], "notes": "string?" }
-
-F) pipeline — for deal/project stage tracking:
-{ "display": "pipeline", "client": "string", "stages": ["string"], "current_stage": 0-indexed, "deal_value": "string?", "risk": "low|medium|high", "next_action": "string", "next_action_due": "string?", "blockers": ["string"], "summary": "string?" }
-
-G) chart — for numerical data with trends or distributions:
-{ "display": "chart", "chart_type": "bar|donut", "title": "string", "datasets": [{ "name": "string", "values": [number], "labels": ["string"] (donut only), "color": "blue|green|red|orange|purple|cyan", "colors": ["string"] (donut only) }], "labels": ["string"] (x-axis for bar), "summary": "string?" }
-
-CHOOSE the format that best visualizes what you found. You are NOT limited to one format — pick whatever makes the data most useful at a glance.`
-
-// Prompt templates for each Manus tool
+// Prompt templates — each uses few-shot pattern with "Input:/Output:" trigger
 const TOOL_PROMPTS: Record<string, (args: Record<string, string>) => string> = {
   who_is_this: (args) =>
-    `${MANUS_SYSTEM}\n\nTASK: Look up this person. Search the web for: name, company, role, recent activity.\n\nHINT: "profile" or "checklist" formats often work well for people.\n\nContext: ${args.context || "See attached screenshot"}${args.name ? `\nName: ${args.name}` : ""}${args.company ? `\nCompany: ${args.company}` : ""}`,
+    `${MANUS_SYSTEM}\n\nExample:\nInput: Who is Jensen Huang?\nOutput: {"display":"profile","name":"Jensen Huang","role":"CEO & Co-founder","company":"NVIDIA","details":["Founded NVIDIA 1993","Net worth ~$120B","Drives AI chip strategy"],"sentiment":"positive","summary":"Visionary CEO leading AI revolution"}\n\nInput: ${args.context || "See attached screenshot"}${args.name ? ` ${args.name}` : ""}${args.company ? ` at ${args.company}` : ""}\nOutput:`,
 
   meeting_brief: (args) =>
-    `${MANUS_SYSTEM}\n\nTASK: Prepare a meeting brief for: ${args.person_or_company}. Research them on the web. Find: recent news, key facts, talking points, potential topics.\n\nHINT: "checklist" or "profile" formats work well for briefs. Use "context" for key facts and "items" for action items.${args.meeting_topic ? `\nMeeting topic: ${args.meeting_topic}` : ""}`,
+    `${MANUS_SYSTEM}\n\nExample:\nInput: Meeting brief for Tesla\nOutput: {"display":"checklist","title":"Meeting Brief: Tesla","subtitle":"EV leader, $800B+ market cap","context":[{"text":"Q4 deliveries beat estimates","priority":"high"},{"text":"Cybertruck production ramping","priority":"medium"}],"items":[{"text":"Ask about fleet pricing","checked":false},{"text":"Discuss API integration timeline","checked":false}]}\n\nInput: Meeting brief for ${args.person_or_company}\nOutput:`,
 
   live_fact_check: (args) =>
-    `${MANUS_SYSTEM}\n\nTASK: Fact-check this claim using the web. Find supporting or contradicting evidence.\n\nHINT: "verdict" format is ideal for fact-checking.\n\nClaim: ${args.claim}${args.source_context ? `\nSource: ${args.source_context}` : ""}`,
+    `${MANUS_SYSTEM}\n\nExample:\nInput: Did OpenAI raise $10B from Microsoft?\nOutput: {"display":"verdict","claim":"OpenAI raised $10B from Microsoft","verdict":"true","confidence":"high","evidence":"Microsoft confirmed a $10B investment in OpenAI in Jan 2023","source":"Microsoft blog"}\n\nInput: ${args.claim}\nOutput:`,
 
   company_snapshot: (args) =>
-    `${MANUS_SYSTEM}\n\nTASK: Research "${args.company_name}". Find: founding year, size, funding/valuation, industry, key metrics, recent news.\n\nHINT: Use "chart" (bar) for trends over time, "stat_card" for a headline metric, or "profile" for a company overview. Pick whatever best represents the most interesting finding.${args.specific_focus ? `\nFocus on: ${args.specific_focus}` : ""}`,
+    `${MANUS_SYSTEM}\n\nExample:\nInput: Research Datadog\nOutput: {"display":"chart","chart_type":"bar","title":"Datadog Revenue ($M)","datasets":[{"name":"Revenue","values":[603,1029,1675,2128],"color":"purple"}],"labels":["2021","2022","2023","2024"],"summary":"$2.1B ARR, 26% YoY growth"}\n\nInput: Research ${args.company_name}\nOutput:`,
 
   deal_status: (args) =>
-    `${MANUS_SYSTEM}\n\nTASK: Research "${args.client_name}" and assess deal/relationship status. Find: current stage, recent interactions, potential blockers, next steps.\n\nHINT: "pipeline" format works well for deal tracking. "checklist" is good if there are many action items.`,
+    `${MANUS_SYSTEM}\n\nExample:\nInput: Deal status for Snowflake\nOutput: {"display":"pipeline","client":"Snowflake","stages":["Prospecting","Discovery","Proposal","Negotiation","Closed"],"current_stage":3,"deal_value":"$2M ARR","risk":"medium","next_action":"Final pricing review","next_action_due":"Next week","blockers":["Legal review pending"]}\n\nInput: Deal status for ${args.client_name}\nOutput:`,
 
   competitive_intel: (args) =>
-    `${MANUS_SYSTEM}\n\nTASK: Competitive intel on "${args.competitor_name}". Search web for: market position, strengths, weaknesses, pricing, recent moves.\n\nHINT: "comparison" is great for head-to-head analysis. Use "us_name"/"them_name" with scored metrics. "chart" (donut) works for market share.${args.comparison_context ? `\nFocus: ${args.comparison_context}` : ""}${args.our_product ? `\nOur product: ${args.our_product}` : ""}`,
+    `${MANUS_SYSTEM}\n\nExample:\nInput: Competitive intel on Snowflake\nOutput: {"display":"comparison","us_name":"Us","them_name":"Snowflake","metrics":[{"label":"Pricing","us_score":8,"them_score":5},{"label":"Performance","us_score":7,"them_score":8},{"label":"Ease of Use","us_score":9,"them_score":6},{"label":"Ecosystem","us_score":6,"them_score":9}],"verdict":"We win on price and UX, they win on ecosystem"}\n\nInput: Competitive intel on ${args.competitor_name}\nOutput:`,
 
   number_lookup: (args) =>
-    `${MANUS_SYSTEM}\n\nTASK: Find this number/stat: "${args.query}". Search the web.\n\nHINT: "stat_card" for a single number (include "trend" array if historical data exists). "chart" (bar) for data across categories or time.${args.time_period ? `\nTime period: ${args.time_period}` : ""}${args.source_hint ? `\nLook in: ${args.source_hint}` : ""}`,
+    `${MANUS_SYSTEM}\n\nExample:\nInput: What is Stripe's valuation?\nOutput: {"display":"stat_card","value":"$91.5B","label":"Stripe Valuation","sentiment":"positive","trend":[20,36,95,50,91.5],"source":"Secondary market data, 2024"}\n\nInput: ${args.query}\nOutput:`,
 }
 
 export type ManusToolName = "who_is_this" | "meeting_brief" | "live_fact_check" | "company_snapshot" | "deal_status" | "competitive_intel" | "number_lookup"
