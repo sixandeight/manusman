@@ -40,28 +40,68 @@ ${DISPLAY_FORMATS}
 
 Rules: No clarifying questions. No waiting. If connectors unavailable, use web. No apologies.`
 
-// Prompt templates — each uses few-shot pattern with "Input:/Output:" trigger
+// Example pools per tool — each call randomly picks one, so Manus sees variety across calls
+function pick<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.length)] }
+
+const EXAMPLES: Record<string, string[]> = {
+  who_is_this: [
+    `Input: Who is Jensen Huang?\nOutput: {"display":"profile","name":"Jensen Huang","role":"CEO & Co-founder","company":"NVIDIA","details":["Founded NVIDIA 1993","Net worth ~$120B","Drives AI chip strategy"],"sentiment":"positive","summary":"Visionary CEO leading AI revolution"}`,
+    `Input: Who is this person at Stripe?\nOutput: {"display":"checklist","title":"Person Lookup: Stripe Contact","context":[{"text":"Patrick Collison, CEO & Co-founder","priority":"high"},{"text":"Previously built Auctomatic (acquired at 19)","priority":"medium"}],"items":[{"text":"Ask about enterprise pricing","checked":false},{"text":"Mention Series I at $65B valuation","checked":false}]}`,
+    `Input: Who is Sam Altman?\nOutput: {"display":"stat_card","value":"$250B","label":"OpenAI Valuation Under Altman","sentiment":"positive","trend":[14,29,80,157,250],"source":"2024 funding rounds"}`,
+  ],
+  meeting_brief: [
+    `Input: Meeting brief for Tesla\nOutput: {"display":"checklist","title":"Meeting Brief: Tesla","subtitle":"EV leader, $800B+ market cap","context":[{"text":"Q4 deliveries beat estimates","priority":"high"},{"text":"Cybertruck production ramping","priority":"medium"}],"items":[{"text":"Ask about fleet pricing","checked":false},{"text":"Discuss API integration timeline","checked":false}]}`,
+    `Input: Meeting brief for Jensen Huang\nOutput: {"display":"profile","name":"Jensen Huang","role":"CEO","company":"NVIDIA","details":["GTC keynote March 2025","Blackwell GPU shipping","$3.4T market cap"],"sentiment":"positive","summary":"Meeting with NVIDIA CEO — focus on AI infrastructure partnership"}`,
+    `Input: Meeting brief for Anthropic\nOutput: {"display":"comparison","us_name":"Us","them_name":"Anthropic","metrics":[{"label":"Model Quality","us_score":7,"them_score":9},{"label":"Pricing","us_score":8,"them_score":6},{"label":"Enterprise Features","us_score":9,"them_score":7}],"verdict":"Strong on enterprise, they lead on model quality — discuss integration"}`,
+  ],
+  live_fact_check: [
+    `Input: Did OpenAI raise $10B from Microsoft?\nOutput: {"display":"verdict","claim":"OpenAI raised $10B from Microsoft","verdict":"true","confidence":"high","evidence":"Microsoft confirmed a $10B investment in OpenAI in Jan 2023","source":"Microsoft blog"}`,
+    `Input: Is Stripe profitable?\nOutput: {"display":"stat_card","value":"$2B+","label":"Stripe Net Revenue (Profitable since 2024)","sentiment":"positive","trend":[0.8,1.2,1.6,2.1],"source":"WSJ, 2024"}`,
+    `Input: Did Google acquire DeepMind for $500M?\nOutput: {"display":"verdict","claim":"Google acquired DeepMind for $500M","verdict":"partially_true","confidence":"high","evidence":"Google acquired DeepMind in 2014 for approximately £400M (~$625M), not $500M","source":"Financial Times"}`,
+  ],
+  company_snapshot: [
+    `Input: Research Datadog\nOutput: {"display":"chart","chart_type":"bar","title":"Datadog Revenue ($M)","datasets":[{"name":"Revenue","values":[603,1029,1675,2128],"color":"purple"}],"labels":["2021","2022","2023","2024"],"summary":"$2.1B ARR, 26% YoY growth"}`,
+    `Input: Research Notion\nOutput: {"display":"profile","name":"Notion","role":"Productivity Platform","company":"Notion Labs","details":["Founded 2013, San Francisco","100M+ users","$10B valuation (2024)","All-in-one workspace"],"sentiment":"positive","summary":"Dominant workspace tool, expanding into AI and enterprise"}`,
+    `Input: Research cloud market\nOutput: {"display":"chart","chart_type":"donut","title":"Cloud Infrastructure Market Share","datasets":[{"name":"Share","values":[31,24,11,34],"labels":["AWS","Azure","GCP","Others"],"colors":["orange","blue","red","gray"]}],"summary":"AWS leads at 31%, Azure closing gap at 24%"}`,
+  ],
+  deal_status: [
+    `Input: Deal status for Snowflake\nOutput: {"display":"pipeline","client":"Snowflake","stages":["Prospecting","Discovery","Proposal","Negotiation","Closed"],"current_stage":3,"deal_value":"$2M ARR","risk":"medium","next_action":"Final pricing review","next_action_due":"Next week","blockers":["Legal review pending"]}`,
+    `Input: Deal status for Acme Corp\nOutput: {"display":"checklist","title":"Deal Status: Acme Corp","subtitle":"$500K opportunity, early stage","context":[{"text":"Initial demo completed last Tuesday","priority":"high"},{"text":"Budget approved for Q3","priority":"medium"},{"text":"Competing with Salesforce bid","priority":"high"}],"items":[{"text":"Send technical requirements doc","checked":false},{"text":"Schedule security review call","checked":false}]}`,
+  ],
+  competitive_intel: [
+    `Input: Competitive intel on Snowflake\nOutput: {"display":"comparison","us_name":"Us","them_name":"Snowflake","metrics":[{"label":"Pricing","us_score":8,"them_score":5},{"label":"Performance","us_score":7,"them_score":8},{"label":"Ease of Use","us_score":9,"them_score":6},{"label":"Ecosystem","us_score":6,"them_score":9}],"verdict":"We win on price and UX, they win on ecosystem"}`,
+    `Input: Competitive intel on AWS\nOutput: {"display":"chart","chart_type":"donut","title":"Cloud Market Share vs AWS","datasets":[{"name":"Share","values":[31,12,57],"labels":["AWS","Us","Others"],"colors":["orange","green","gray"]}],"summary":"AWS dominates at 31%, we hold 12% — growing fastest in mid-market"}`,
+    `Input: Competitive intel on Figma\nOutput: {"display":"stat_card","value":"$12.5B","label":"Figma Valuation (Post-Adobe)","sentiment":"negative","trend":[2,5,10,20,12.5],"source":"After failed $20B Adobe acquisition, valued at $12.5B in 2024","context":"Vulnerability: enterprise pricing backlash"}`,
+  ],
+  number_lookup: [
+    `Input: What is Stripe's valuation?\nOutput: {"display":"stat_card","value":"$91.5B","label":"Stripe Valuation","sentiment":"positive","trend":[20,36,95,50,91.5],"source":"Secondary market data, 2024"}`,
+    `Input: Tesla quarterly deliveries 2024\nOutput: {"display":"chart","chart_type":"bar","title":"Tesla Deliveries by Quarter (2024)","datasets":[{"name":"Deliveries","values":[387,444,463,496],"color":"green"}],"labels":["Q1","Q2","Q3","Q4"],"summary":"1.79M total, first annual decline in company history"}`,
+    `Input: How many people use ChatGPT?\nOutput: {"display":"stat_card","value":"300M+","label":"ChatGPT Weekly Active Users","sentiment":"positive","trend":[100,180,250,300],"source":"OpenAI, Jan 2025","context":"Doubled in 2024"}`,
+  ],
+}
+
+// Prompt templates — randomly picks one example per call for format variety
 const TOOL_PROMPTS: Record<string, (args: Record<string, string>) => string> = {
   who_is_this: (args) =>
-    `${MANUS_SYSTEM}\n\nExample:\nInput: Who is Jensen Huang?\nOutput: {"display":"profile","name":"Jensen Huang","role":"CEO & Co-founder","company":"NVIDIA","details":["Founded NVIDIA 1993","Net worth ~$120B","Drives AI chip strategy"],"sentiment":"positive","summary":"Visionary CEO leading AI revolution"}\n\nInput: ${args.context || "See attached screenshot"}${args.name ? ` ${args.name}` : ""}${args.company ? ` at ${args.company}` : ""}\nOutput:`,
+    `${MANUS_SYSTEM}\n\nExample:\n${pick(EXAMPLES.who_is_this)}\n\nInput: ${args.context || "See attached screenshot"}${args.name ? ` ${args.name}` : ""}${args.company ? ` at ${args.company}` : ""}\nOutput:`,
 
   meeting_brief: (args) =>
-    `${MANUS_SYSTEM}\n\nExample:\nInput: Meeting brief for Tesla\nOutput: {"display":"checklist","title":"Meeting Brief: Tesla","subtitle":"EV leader, $800B+ market cap","context":[{"text":"Q4 deliveries beat estimates","priority":"high"},{"text":"Cybertruck production ramping","priority":"medium"}],"items":[{"text":"Ask about fleet pricing","checked":false},{"text":"Discuss API integration timeline","checked":false}]}\n\nInput: Meeting brief for ${args.person_or_company}\nOutput:`,
+    `${MANUS_SYSTEM}\n\nExample:\n${pick(EXAMPLES.meeting_brief)}\n\nInput: Meeting brief for ${args.person_or_company}\nOutput:`,
 
   live_fact_check: (args) =>
-    `${MANUS_SYSTEM}\n\nExample:\nInput: Did OpenAI raise $10B from Microsoft?\nOutput: {"display":"verdict","claim":"OpenAI raised $10B from Microsoft","verdict":"true","confidence":"high","evidence":"Microsoft confirmed a $10B investment in OpenAI in Jan 2023","source":"Microsoft blog"}\n\nInput: ${args.claim}\nOutput:`,
+    `${MANUS_SYSTEM}\n\nExample:\n${pick(EXAMPLES.live_fact_check)}\n\nInput: ${args.claim}\nOutput:`,
 
   company_snapshot: (args) =>
-    `${MANUS_SYSTEM}\n\nExample:\nInput: Research Datadog\nOutput: {"display":"chart","chart_type":"bar","title":"Datadog Revenue ($M)","datasets":[{"name":"Revenue","values":[603,1029,1675,2128],"color":"purple"}],"labels":["2021","2022","2023","2024"],"summary":"$2.1B ARR, 26% YoY growth"}\n\nInput: Research ${args.company_name}\nOutput:`,
+    `${MANUS_SYSTEM}\n\nExample:\n${pick(EXAMPLES.company_snapshot)}\n\nInput: Research ${args.company_name}\nOutput:`,
 
   deal_status: (args) =>
-    `${MANUS_SYSTEM}\n\nExample:\nInput: Deal status for Snowflake\nOutput: {"display":"pipeline","client":"Snowflake","stages":["Prospecting","Discovery","Proposal","Negotiation","Closed"],"current_stage":3,"deal_value":"$2M ARR","risk":"medium","next_action":"Final pricing review","next_action_due":"Next week","blockers":["Legal review pending"]}\n\nInput: Deal status for ${args.client_name}\nOutput:`,
+    `${MANUS_SYSTEM}\n\nExample:\n${pick(EXAMPLES.deal_status)}\n\nInput: Deal status for ${args.client_name}\nOutput:`,
 
   competitive_intel: (args) =>
-    `${MANUS_SYSTEM}\n\nExample:\nInput: Competitive intel on Snowflake\nOutput: {"display":"comparison","us_name":"Us","them_name":"Snowflake","metrics":[{"label":"Pricing","us_score":8,"them_score":5},{"label":"Performance","us_score":7,"them_score":8},{"label":"Ease of Use","us_score":9,"them_score":6},{"label":"Ecosystem","us_score":6,"them_score":9}],"verdict":"We win on price and UX, they win on ecosystem"}\n\nInput: Competitive intel on ${args.competitor_name}\nOutput:`,
+    `${MANUS_SYSTEM}\n\nExample:\n${pick(EXAMPLES.competitive_intel)}\n\nInput: Competitive intel on ${args.competitor_name}\nOutput:`,
 
   number_lookup: (args) =>
-    `${MANUS_SYSTEM}\n\nExample:\nInput: What is Stripe's valuation?\nOutput: {"display":"stat_card","value":"$91.5B","label":"Stripe Valuation","sentiment":"positive","trend":[20,36,95,50,91.5],"source":"Secondary market data, 2024"}\n\nInput: ${args.query}\nOutput:`,
+    `${MANUS_SYSTEM}\n\nExample:\n${pick(EXAMPLES.number_lookup)}\n\nInput: ${args.query}\nOutput:`,
 }
 
 export type ManusToolName = "who_is_this" | "meeting_brief" | "live_fact_check" | "company_snapshot" | "deal_status" | "competitive_intel" | "number_lookup"
