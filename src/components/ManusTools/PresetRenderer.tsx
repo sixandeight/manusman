@@ -33,11 +33,16 @@ const StatPreset: React.FC<{ d: any; color: string }> = ({ d, color: _color }) =
       <div className="text-3xl font-bold" style={{ color: sentColor }}>{d.value}</div>
       {trend && trend.length > 1 && (
         <div className="flex items-end gap-1 h-8">
-          {trend.map((v: number, i: number) => {
+          {(() => {
+            const min = Math.min(...trend)
             const max = Math.max(...trend)
-            const pct = max > 0 ? (v / max) * 100 : 0
-            return <div key={i} className="flex-1 rounded-sm" style={{ height: `${pct}%`, background: sentColor, opacity: 0.6 + (i / trend.length) * 0.4 }} />
-          })}
+            const range = max - min
+            return trend.map((v: number, i: number) => {
+              // Normalize to min-max range so differences are visible, with 15% floor
+              const pct = range > 0 ? 15 + ((v - min) / range) * 85 : 50
+              return <div key={i} className="flex-1 rounded-sm" style={{ height: `${pct}%`, background: sentColor, opacity: 0.6 + (i / trend.length) * 0.4 }} />
+            })
+          })()}
         </div>
       )}
       <div className="text-sm text-white/50">{d.label}</div>
@@ -259,7 +264,9 @@ const ChartPreset: React.FC<{ d: any; color: string }> = ({ d, color }) => {
   }
 
   // Bar / Line chart
+  const min = Math.min(...ds.values)
   const max = Math.max(...ds.values, 1)
+  const range = max - min
   const labels = d.labels || ds.values.map((_: number, i: number) => String(i))
   const barColor = resolveColor(ds.color)
 
@@ -267,11 +274,17 @@ const ChartPreset: React.FC<{ d: any; color: string }> = ({ d, color }) => {
     <div className="space-y-3">
       <div className="text-sm font-medium text-white/70">{d.title}</div>
       <div className="flex items-end gap-1 h-24">
-        {ds.values.map((v: number, i: number) => (
+        {ds.values.map((v: number, i: number) => {
+          // Normalize with min-max range, 10% floor so smallest bar is still visible
+          const pct = range > 0 ? 10 + ((v - min) / range) * 90 : 50
+          return (
           <div key={i} className="flex-1 flex flex-col items-center gap-1">
-            <div className="w-full rounded-t-sm" style={{ height: `${(v / max) * 100}%`, background: barColor, minHeight: 2 }} />
+            <span className="text-[9px] text-white/40 font-mono">{v}</span>
+            <div className="w-full rounded-t-sm" style={{ height: `${pct}%`, background: barColor, minHeight: 2 }} />
             <span className="text-[9px] text-white/30">{labels[i]}</span>
           </div>
+          )
+        })
         ))}
       </div>
       {d.summary && <div className="text-xs text-white/50">{d.summary}</div>}

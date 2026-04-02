@@ -50,15 +50,46 @@ function nextId(tool: string) { return `c-${tool}-${++counter}-${Date.now()}` }
 // Parse result JSON — extract JSON from anywhere in text
 function parseResultJSON(text: string): any | null {
   if (!text) return null
+
+  // Clean code fences if present
+  const cleaned = text.trim().replace(/^```(?:json)?\s*\n?/, "").replace(/\n?\s*```$/, "").trim()
+
+  // Strategy 1: try parsing the cleaned text directly
+  try {
+    const parsed = JSON.parse(cleaned)
+    if (parsed && typeof parsed === "object") return parsed
+  } catch {}
+
+  // Strategy 2: extract ```json ... ``` block from anywhere in the text
   const codeBlockMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/)
   if (codeBlockMatch) {
     try { return JSON.parse(codeBlockMatch[1].trim()) } catch {}
   }
-  const jsonMatch = text.match(/\{[\s\S]*"display"\s*:\s*"[^"]+[\s\S]*\}/)
-  if (jsonMatch) {
-    try { return JSON.parse(jsonMatch[0]) } catch {}
+
+  // Strategy 3: find the first balanced { } block containing "display"
+  const startIdx = text.indexOf('{"display"')
+  if (startIdx === -1) {
+    const altIdx = text.indexOf('"display"')
+    if (altIdx > 0) {
+      // find the { before "display"
+      const braceIdx = text.lastIndexOf('{', altIdx)
+      if (braceIdx >= 0) {
+        // find matching closing brace
+        let depth = 0
+        for (let i = braceIdx; i < text.length; i++) {
+          if (text[i] === '{') depth++
+          else if (text[i] === '}') { depth--; if (depth === 0) { try { return JSON.parse(text.substring(braceIdx, i + 1)) } catch { break } } }
+        }
+      }
+    }
+  } else {
+    let depth = 0
+    for (let i = startIdx; i < text.length; i++) {
+      if (text[i] === '{') depth++
+      else if (text[i] === '}') { depth--; if (depth === 0) { try { return JSON.parse(text.substring(startIdx, i + 1)) } catch { break } } }
+    }
   }
-  try { return JSON.parse(text.trim()) } catch {}
+
   return null
 }
 
