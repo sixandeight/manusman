@@ -284,8 +284,7 @@ const ChartPreset: React.FC<{ d: any; color: string }> = ({ d, color }) => {
             <span className="text-[9px] text-white/30">{labels[i]}</span>
           </div>
           )
-        })
-        ))}
+        })}
       </div>
       {d.summary && <div className="text-xs text-white/50">{d.summary}</div>}
     </div>
