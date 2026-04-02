@@ -12,20 +12,31 @@ dotenv.config()
 const isDev = process.env.NODE_ENV === "development"
 const isDevTest = process.env.IS_DEV_TEST === "true"
 const MOCK_API_WAIT_TIME = Number(process.env.MOCK_API_WAIT_TIME) || 500
+const DEMO_MODE = process.env.DEMO_MODE === "true"
 
-// Few-shot system prompt — experimentally proven to produce the most reliable JSON output
-// Key findings: mode "agent" is faster+cheaper than "speed", few-shot beats verbose schemas
-const MANUS_SYSTEM = `You are a JSON API. You research the question, then output ONLY raw JSON. No markdown, no code fences, no prose.
-
-Pick the display format that best fits your findings:
-
-stat_card: {"display":"stat_card","value":"$3.4T","label":"Apple Market Cap","sentiment":"positive","trend":[2.1,2.5,2.8,3.4],"source":"Yahoo Finance"}
+// Shared display format examples (used in both modes)
+const DISPLAY_FORMATS = `stat_card: {"display":"stat_card","value":"$3.4T","label":"Apple Market Cap","sentiment":"positive","trend":[2.1,2.5,2.8,3.4],"source":"Yahoo Finance"}
 comparison: {"display":"comparison","us_name":"Us","them_name":"Competitor","metrics":[{"label":"Price","us_score":8,"them_score":6}],"verdict":"We lead on price"}
 profile: {"display":"profile","name":"John","role":"CEO","company":"Acme","details":["Founded 2020","50 employees"],"sentiment":"positive","summary":"Growing fast"}
 verdict: {"display":"verdict","claim":"X is true","verdict":"true","confidence":"high","evidence":"Source confirms X","source":"Reuters"}
 checklist: {"display":"checklist","title":"Meeting Brief","context":[{"text":"Key fact","priority":"high"}],"items":[{"text":"Discuss pricing","checked":false}]}
 pipeline: {"display":"pipeline","client":"Acme","stages":["Lead","Qualified","Proposal","Negotiation","Closed"],"current_stage":2,"deal_value":"$500K","risk":"medium","next_action":"Send proposal"}
-chart: {"display":"chart","chart_type":"bar","title":"Revenue by Year","datasets":[{"name":"Revenue","values":[10,15,22,31],"color":"blue"}],"labels":["2021","2022","2023","2024"]}
+chart: {"display":"chart","chart_type":"bar","title":"Revenue by Year","datasets":[{"name":"Revenue","values":[10,15,22,31],"color":"blue"}],"labels":["2021","2022","2023","2024"]}`
+
+// Production: researches online. Demo: uses training data only (much faster).
+const MANUS_SYSTEM = DEMO_MODE
+  ? `You are a JSON API. Answer using your training knowledge ONLY. Do NOT browse the web. Do NOT use any tools. Do NOT search. Just answer immediately from what you already know. Output ONLY raw JSON. No markdown, no code fences, no prose.
+
+Pick the display format that best fits:
+
+${DISPLAY_FORMATS}
+
+Rules: No browsing. No tool use. No searching. Answer instantly from memory. No clarifying questions. No apologies.`
+  : `You are a JSON API. You research the question, then output ONLY raw JSON. No markdown, no code fences, no prose.
+
+Pick the display format that best fits your findings:
+
+${DISPLAY_FORMATS}
 
 Rules: No clarifying questions. No waiting. If connectors unavailable, use web. No apologies.`
 
