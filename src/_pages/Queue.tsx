@@ -47,6 +47,9 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
   // Mic capture — always-on rolling 30s buffer
   const micChunksRef = useRef<Blob[]>([])
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const [micStatus, setMicStatus] = useState<string>("starting...")
+  const [micChunkCount, setMicChunkCount] = useState(0)
+  const [lastTranscript, setLastTranscript] = useState<string>("")
 
   useEffect(() => {
     let recorder: MediaRecorder | null = null
@@ -60,16 +63,18 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
         recorder.ondataavailable = (e) => {
           if (e.data.size > 0) {
             micChunksRef.current.push(e.data)
-            // Keep only last 30s worth of chunks (at 250ms intervals = 120 chunks)
             while (micChunksRef.current.length > 120) {
               micChunksRef.current.shift()
             }
+            setMicChunkCount(micChunksRef.current.length)
           }
         }
 
-        recorder.start(250) // chunk every 250ms
+        recorder.start(250)
+        setMicStatus("live")
         console.log("[Mic] Recording started — 30s rolling buffer")
       } catch (err) {
+        setMicStatus("denied")
         console.warn("[Mic] Could not start microphone:", err)
       }
     }
@@ -271,15 +276,28 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
   const handleToolSubmit = useCallback((toolName: string, args: Record<string, string>, screenshotPath?: string) => {
     const doSubmit = async () => {
       let transcript = ""
-      console.log(`[Mic] Buffer has ${micChunksRef.current.length} chunks (need >= 8)`)
       if (micChunksRef.current.length >= 8) {
         try {
+          setLastTranscript("transcribing...")
           const blob = new Blob([...micChunksRef.current], { type: "audio/webm" })
           const arrayBuffer = await blob.arrayBuffer()
           transcript = await window.electronAPI.transcribeAudioBuffer(arrayBuffer, "audio/webm")
+          if (transcript) {
+            setLastTranscript(transcript)
+            // Clear after 5s
+            setTimeout(() => setLastTranscript(""), 5000)
+          } else {
+            setLastTranscript("(empty)")
+            setTimeout(() => setLastTranscript(""), 2000)
+          }
         } catch (err) {
+          setLastTranscript("error")
+          setTimeout(() => setLastTranscript(""), 2000)
           console.warn("[Mic] Transcription failed, proceeding without:", err)
         }
+      } else {
+        setLastTranscript("(not enough audio)")
+        setTimeout(() => setLastTranscript(""), 2000)
       }
       window.electronAPI.runManusTool(toolName, { ...args, _transcript: transcript }, screenshotPath)
     }
@@ -337,6 +355,28 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
         onMouseLeave={() => window.electronAPI.setIgnoreMouse(true)}
       >
         running: {runningTools.size} | results: {toolResults.length} | prompt: {activeToolPrompt ? activeToolPrompt.toolName : "none"} | chat: {isChatOpen ? "open" : "closed"}
+      </div>
+
+      {/* Mic status — bottom-right */}
+      <div
+        className="fixed bottom-2 right-2 z-[999] px-3 py-1 rounded font-mono"
+        style={{
+          pointerEvents: "auto",
+          background: micStatus === "live" ? "rgba(0, 200, 100, 0.15)" : "rgba(255, 100, 0, 0.15)",
+          border: `1px solid ${micStatus === "live" ? "rgba(0, 200, 100, 0.4)" : "rgba(255, 100, 0, 0.4)"}`,
+          color: micStatus === "live" ? "#0c6" : "#f64",
+          fontSize: "11px",
+          maxWidth: 400,
+        }}
+        onMouseEnter={() => window.electronAPI.setIgnoreMouse(false)}
+        onMouseLeave={() => window.electronAPI.setIgnoreMouse(true)}
+      >
+        <div>{micStatus === "live" ? `mic ${Math.round(micChunkCount * 0.25)}s / 30s` : `mic: ${micStatus}`}</div>
+        {lastTranscript && (
+          <div className="mt-1 text-white/60 truncate" style={{ fontSize: "10px" }}>
+            {lastTranscript}
+          </div>
+        )}
       </div>
 
       {/* Command bar — top-left, interactive (DEBUG: blue tint) */}
