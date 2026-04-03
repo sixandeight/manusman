@@ -167,15 +167,7 @@ export class PhysicsEngine {
 
         const positions = new Map<string, { x: number; y: number }>()
         for (const node of this.nodes) {
-          // Gradually interpolate size toward target
-          if (node.width !== node.targetWidth) {
-            node.width += Math.sign(node.targetWidth - node.width) * Math.min(20, Math.abs(node.targetWidth - node.width))
-          }
-          if (node.height !== node.targetHeight) {
-            node.height += Math.sign(node.targetHeight - node.height) * Math.min(20, Math.abs(node.targetHeight - node.height))
-          }
-
-          // Constant center repulsion — always pushes away from center, stronger when closer
+          // Constant center repulsion — always pushes away from center
           const dx = (node.x || 0) - cx
           const dy = (node.y || 0) - cy
           const dist = Math.sqrt(dx * dx + dy * dy) || 1
@@ -234,14 +226,9 @@ export class PhysicsEngine {
     this.simulation.alpha(0.1).restart()
   }
 
-  public updateNodeSize(id: string, width: number, height: number): void {
-    const node = this.nodes.find(n => n.id === id)
-    if (node) {
-      // Set targets — actual size will interpolate in tick handler
-      node.targetWidth = width
-      node.targetHeight = height
-      this.simulation.alpha(0.08).restart()
-    }
+  public updateNodeSize(_id: string, _width: number, _height: number): void {
+    // No-op — keep physics node size constant to prevent collision jumps.
+    // Visual size change is handled by CSS transition in the card component.
   }
 
   public updateLinks(_newLinks: Array<{ source: string; target: string }>): void {

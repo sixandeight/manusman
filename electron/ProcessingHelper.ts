@@ -84,28 +84,28 @@ const EXAMPLES: Record<string, string[]> = {
   ],
 }
 
-// Prompt templates — randomly picks one example per call for format variety
+// Prompt templates — agency framing + rotating few-shot examples
 const TOOL_PROMPTS: Record<string, (args: Record<string, string>) => string> = {
   who_is_this: (args) =>
-    `${MANUS_SYSTEM}\n\nExample:\n${pick(EXAMPLES.who_is_this)}\n\nInput: ${args.context || "See attached screenshot"}${args.name ? ` ${args.name}` : ""}${args.company ? ` at ${args.company}` : ""}\nOutput:`,
+    `${MANUS_SYSTEM}\n\nYou are a consulting analyst. Your client is on a live call and needs to know who they're talking to. Identify this person — pull their role, company, recent activity, and anything useful for the conversation. Make it glanceable in 5 seconds.\n\nExample:\n${pick(EXAMPLES.who_is_this)}\n\nInput: ${args.context || "See attached screenshot"}${args.name ? ` ${args.name}` : ""}${args.company ? ` at ${args.company}` : ""}\nOutput:`,
 
   meeting_brief: (args) =>
-    `${MANUS_SYSTEM}\n\nExample:\n${pick(EXAMPLES.meeting_brief)}\n\nInput: Meeting brief for ${args.person_or_company}\nOutput:`,
+    `${MANUS_SYSTEM}\n\nYou are a consulting analyst preparing a live briefing card. Your client is about to enter a meeting and needs key facts, recent news, and talking points they can glance at during the call. Focus on what's actionable and current.\n\nExample:\n${pick(EXAMPLES.meeting_brief)}\n\nInput: Meeting brief for ${args.person_or_company}\nOutput:`,
 
   live_fact_check: (args) =>
-    `${MANUS_SYSTEM}\n\nExample:\n${pick(EXAMPLES.live_fact_check)}\n\nInput: ${args.claim}\nOutput:`,
+    `${MANUS_SYSTEM}\n\nYou are a real-time fact-checker supporting a consultant during a live call. Someone just made a claim — verify it immediately. Give a clear verdict with evidence and confidence level. Your client needs to know in 3 seconds whether this is true.\n\nExample:\n${pick(EXAMPLES.live_fact_check)}\n\nInput: ${args.claim}\nOutput:`,
 
   company_snapshot: (args) =>
-    `${MANUS_SYSTEM}\n\nExample:\n${pick(EXAMPLES.company_snapshot)}\n\nInput: Research ${args.company_name}\nOutput:`,
+    `${MANUS_SYSTEM}\n\nYou are a consulting analyst. Your client just mentioned a company during a call and needs a quick snapshot — what does this company do, how big are they, what's their latest news, and what numbers matter. Make it dense and visual.\n\nExample:\n${pick(EXAMPLES.company_snapshot)}\n\nInput: Research ${args.company_name}\nOutput:`,
 
   deal_status: (args) =>
-    `${MANUS_SYSTEM}\n\nExample:\n${pick(EXAMPLES.deal_status)}\n\nInput: Deal status for ${args.client_name}\nOutput:`,
+    `${MANUS_SYSTEM}\n\nYou are a deal desk analyst. Your client needs to know where a deal stands right now — pipeline stage, value, risk, blockers, and next steps. If you don't have real CRM data, construct the most plausible status based on public information about the relationship.\n\nExample:\n${pick(EXAMPLES.deal_status)}\n\nInput: Deal status for ${args.client_name}\nOutput:`,
 
   competitive_intel: (args) =>
-    `${MANUS_SYSTEM}\n\nExample:\n${pick(EXAMPLES.competitive_intel)}\n\nInput: Competitive intel on ${args.competitor_name}\nOutput:`,
+    `${MANUS_SYSTEM}\n\nYou are a competitive intelligence analyst. Your client is about to discuss a competitor during a live call. Score them head-to-head across key metrics, identify where we win and lose, and give a one-line verdict. Make it immediately useful for the conversation.\n\nExample:\n${pick(EXAMPLES.competitive_intel)}\n\nInput: Competitive intel on ${args.competitor_name}\nOutput:`,
 
   number_lookup: (args) =>
-    `${MANUS_SYSTEM}\n\nExample:\n${pick(EXAMPLES.number_lookup)}\n\nInput: ${args.query}\nOutput:`,
+    `${MANUS_SYSTEM}\n\nYou are a research analyst. Your client just asked for a specific number or statistic during a call. Find the most current, authoritative answer. Include trend data if it exists. Cite the source. Make the headline number impossible to miss.\n\nExample:\n${pick(EXAMPLES.number_lookup)}\n\nInput: ${args.query}\nOutput:`,
 }
 
 export type ManusToolName = "who_is_this" | "meeting_brief" | "live_fact_check" | "company_snapshot" | "deal_status" | "competitive_intel" | "number_lookup"
