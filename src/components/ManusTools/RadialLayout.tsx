@@ -18,28 +18,22 @@ interface Card {
 }
 
 const TOOL_COLORS: Record<string, string> = {
-  who_is_this: "#7c3aed", meeting_brief: "#059669", live_fact_check: "#d97706",
-  company_snapshot: "#2563eb", deal_status: "#ea580c", competitive_intel: "#dc2626", number_lookup: "#0891b2",
+  intel: "#2563eb", deal_status: "#ea580c", who_is_this: "#7c3aed", live_fact_check: "#d97706",
 }
 const TOOL_LABELS: Record<string, string> = {
-  who_is_this: "PERSON", meeting_brief: "BRIEF", live_fact_check: "FACT CHECK",
-  company_snapshot: "COMPANY", deal_status: "DEAL", competitive_intel: "INTEL", number_lookup: "STAT",
+  intel: "INTEL", deal_status: "DEAL", who_is_this: "PERSON", live_fact_check: "FACT CHECK",
 }
 const INPUT_PLACEHOLDERS: Record<string, string> = {
-  who_is_this: "Extra context (optional)...", meeting_brief: "Person or company name...",
-  live_fact_check: "Claim to verify...", company_snapshot: "Company name...",
-  deal_status: "Client name...", competitive_intel: "Competitor name...", number_lookup: "What stat to find...",
+  intel: "Company, person, or topic...", deal_status: "Client name...",
+  who_is_this: "Extra context (optional)...", live_fact_check: "Claim to verify...",
 }
 
 function buildArgs(toolName: string, input: string): Record<string, string> {
   switch (toolName) {
-    case "meeting_brief": return { person_or_company: input }
-    case "company_snapshot": return { company_name: input }
+    case "intel": return { query: input }
     case "deal_status": return { client_name: input }
-    case "number_lookup": return { query: input }
     case "who_is_this": return { context: input || "See attached screenshot" }
     case "live_fact_check": return { claim: input }
-    case "competitive_intel": return { competitor_name: input }
     default: return { query: input }
   }
 }

@@ -11,16 +11,12 @@ interface QueueCommandsProps {
 const KEYBINDS = [
   { keys: "Ctrl+B", label: "Show/Hide overlay" },
   { keys: "Ctrl+H", label: "Take screenshot" },
-  { keys: "Ctrl+Enter", label: "Analyze screenshot (Kimi)" },
   { keys: "Ctrl+R", label: "Reset all" },
-  { keys: "─", label: "─── Manus Tools ───" },
-  { keys: "Ctrl+1", label: "Meeting brief" },
-  { keys: "Ctrl+2", label: "Company snapshot" },
-  { keys: "Ctrl+3", label: "Deal status" },
-  { keys: "Ctrl+4", label: "Number lookup" },
-  { keys: "Ctrl+5", label: "Who is this? (screenshot)" },
-  { keys: "Ctrl+6", label: "Fact check (screenshot)" },
-  { keys: "Ctrl+7", label: "Competitive intel (screenshot)" },
+  { keys: "─", label: "─── Tools ───" },
+  { keys: "Ctrl+1", label: "Intel (company/person/competitive)" },
+  { keys: "Ctrl+2", label: "Deal status" },
+  { keys: "Ctrl+3", label: "Who is this? (screenshot)" },
+  { keys: "Ctrl+4", label: "Fact check (screenshot)" },
 ]
 
 const QueueCommands: React.FC<QueueCommandsProps> = ({
@@ -45,31 +41,21 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
       {/* Main bar */}
       <div className="flex items-center gap-2 py-2 px-3 rounded-lg" style={{ background: "rgba(20, 20, 30, 0.85)", border: "1px solid rgba(255,255,255,0.15)" }}>
 
-        {/* Manus tools — quick access */}
-        <button className={btnAccent} onClick={() => window.electronAPI.invoke("trigger-manus-tool", "meeting_brief")}>
-          1 Brief
-        </button>
-        <button className={btnAccent} onClick={() => window.electronAPI.invoke("trigger-manus-tool", "company_snapshot")}>
-          2 Company
+        {/* Tools */}
+        <button className={btnAccent} onClick={() => window.electronAPI.invoke("trigger-manus-tool", "intel")}>
+          1 Intel
         </button>
         <button className={btnAccent} onClick={() => window.electronAPI.invoke("trigger-manus-tool", "deal_status")}>
-          3 Deal
-        </button>
-        <button className={btnAccent} onClick={() => window.electronAPI.invoke("trigger-manus-tool", "number_lookup")}>
-          4 Stat
+          2 Deal
         </button>
 
         <div className="h-5 w-px bg-white/20" />
 
-        {/* Screenshot tools */}
         <button className={btnDefault} onClick={() => window.electronAPI.invoke("trigger-manus-tool", "who_is_this")}>
-          5 Who?
+          3 Who?
         </button>
         <button className={btnDefault} onClick={() => window.electronAPI.invoke("trigger-manus-tool", "live_fact_check")}>
-          6 Fact
-        </button>
-        <button className={btnDefault} onClick={() => window.electronAPI.invoke("trigger-manus-tool", "competitive_intel")}>
-          7 Intel
+          4 Fact
         </button>
 
         <div className="h-5 w-px bg-white/20" />

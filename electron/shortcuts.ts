@@ -79,37 +79,19 @@ export class ShortcutsHelper {
     })
 
     // ── Manus tool shortcuts ──────────────────────────────────
-    // Keybind tools (need text input from user)
     const keybindTools = [
-      { key: "CommandOrControl+1", tool: "meeting_brief" },
-      { key: "CommandOrControl+2", tool: "company_snapshot" },
-      { key: "CommandOrControl+3", tool: "deal_status" },
-      { key: "CommandOrControl+4", tool: "number_lookup" },
+      { key: "CommandOrControl+1", tool: "intel", screenshot: false },
+      { key: "CommandOrControl+2", tool: "deal_status", screenshot: false },
+      { key: "CommandOrControl+3", tool: "who_is_this", screenshot: true },
+      { key: "CommandOrControl+4", tool: "live_fact_check", screenshot: true },
     ] as const
 
-    for (const { key, tool } of keybindTools) {
+    for (const { key, tool, screenshot } of keybindTools) {
       globalShortcut.register(key, () => {
         const mainWindow = this.appState.getMainWindow()
         if (mainWindow) {
-          console.log(`[Shortcuts] ${tool} triggered`)
-          mainWindow.webContents.send("manus-tool-prompt", { toolName: tool, needsScreenshot: false })
-        }
-      })
-    }
-
-    // Screenshot tools (use last screenshot)
-    const screenshotTools = [
-      { key: "CommandOrControl+5", tool: "who_is_this" },
-      { key: "CommandOrControl+6", tool: "live_fact_check" },
-      { key: "CommandOrControl+7", tool: "competitive_intel" },
-    ] as const
-
-    for (const { key, tool } of screenshotTools) {
-      globalShortcut.register(key, () => {
-        const mainWindow = this.appState.getMainWindow()
-        if (mainWindow) {
-          console.log(`[Shortcuts] ${tool} triggered (screenshot)`)
-          mainWindow.webContents.send("manus-tool-prompt", { toolName: tool, needsScreenshot: true })
+          console.log(`[Shortcuts] ${tool} triggered${screenshot ? " (screenshot)" : ""}`)
+          mainWindow.webContents.send("manus-tool-prompt", { toolName: tool, needsScreenshot: screenshot })
         }
       })
     }
