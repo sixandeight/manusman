@@ -386,6 +386,9 @@ const RadialLayout: React.FC<Props> = ({
         if (!next.has(cardId)) continue
         const card = next.get(cardId)!
         const parsed = parseResultJSON(result.text)
+        if (!parsed) {
+          console.warn(`[RadialLayout] Failed to parse JSON for ${card.toolName}. Text starts with: "${result.text?.substring(0, 100)}"`)
+        }
         next.set(cardId, { ...card, phase: "complete", result, parsedResult: parsed })
         physicsRef.current?.updateNodeSize(cardId, 480, 300)
         changed = true

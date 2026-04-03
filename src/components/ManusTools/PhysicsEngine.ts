@@ -153,23 +153,21 @@ export class PhysicsEngine {
     this.onTick = onTick
 
     this.simulation = forceSimulation<PhysicsNode, PhysicsLink>()
-      .velocityDecay(0.35)
-      .alphaDecay(0.008)
-      .alphaTarget(0.03)
-      .force("charge", forceManyBody<PhysicsNode>().strength(-60).distanceMax(400))
-      .force("collide", forceCollide<PhysicsNode>().radius(d => Math.sqrt(d.width ** 2 + d.height ** 2) / 2 + 16))
-      .force("link", forceLink<PhysicsNode, PhysicsLink>().id(d => d.id).distance(120).strength(0.3))
-      .force("zoneX", forceX<PhysicsNode>().x(d => getZoneTarget(d.zone, screenW, screenH).x).strength(0.15))
-      .force("zoneY", forceY<PhysicsNode>().y(d => getZoneTarget(d.zone, screenW, screenH).y).strength(0.15))
+      .velocityDecay(0.4)
+      .alphaDecay(0.01)
+      .alphaTarget(0.02)
+      .force("charge", forceManyBody<PhysicsNode>().strength(-80).distanceMax(500))
+      .force("collide", forceCollide<PhysicsNode>().radius(d => Math.max(d.width, d.height) / 2 + 24).strength(1))
+      // No link force — cards don't attract each other
+      .force("zoneX", forceX<PhysicsNode>().x(d => getZoneTarget(d.zone, screenW, screenH).x).strength(0.2))
+      .force("zoneY", forceY<PhysicsNode>().y(d => getZoneTarget(d.zone, screenW, screenH).y).strength(0.2))
       .on("tick", () => {
         const cx = screenW / 2
         const cy = screenH / 2
-        const deadZoneW = screenW * 0.3 // center 30% of screen width
-        const deadZoneH = screenH * 0.3 // center 30% of screen height
 
         const positions = new Map<string, { x: number; y: number }>()
         for (const node of this.nodes) {
-          // Gradually interpolate size toward target (20px per tick ≈ smooth over ~10 ticks)
+          // Gradually interpolate size toward target
           if (node.width !== node.targetWidth) {
             node.width += Math.sign(node.targetWidth - node.width) * Math.min(20, Math.abs(node.targetWidth - node.width))
           }
@@ -177,18 +175,13 @@ export class PhysicsEngine {
             node.height += Math.sign(node.targetHeight - node.height) * Math.min(20, Math.abs(node.targetHeight - node.height))
           }
 
-          // Center repulsion — push cards away from the middle zone
+          // Constant center repulsion — always pushes away from center, stronger when closer
           const dx = (node.x || 0) - cx
           const dy = (node.y || 0) - cy
-          const distX = Math.abs(dx)
-          const distY = Math.abs(dy)
-
-          // If card is inside the dead zone, push it outward
-          if (distX < deadZoneW / 2 && distY < deadZoneH / 2) {
-            const pushStrength = 2
-            node.vx = (node.vx || 0) + (dx > 0 ? pushStrength : -pushStrength)
-            node.vy = (node.vy || 0) + (dy > 0 ? pushStrength : -pushStrength)
-          }
+          const dist = Math.sqrt(dx * dx + dy * dy) || 1
+          const centerForce = 3 // constant push strength
+          node.vx = (node.vx || 0) + (dx / dist) * centerForce
+          node.vy = (node.vy || 0) + (dy / dist) * centerForce
 
           const x = Math.max(16, Math.min(this.screenW - node.width - 16, node.x || 0))
           const y = Math.max(16, Math.min(this.screenH - node.height - 16, node.y || 0))
@@ -251,20 +244,8 @@ export class PhysicsEngine {
     }
   }
 
-  public updateLinks(newLinks: Array<{ source: string; target: string }>): void {
-    this.links = newLinks as PhysicsLink[]
-
-    for (const link of newLinks) {
-      const sourceZone = this.nodeZones.get(link.source)
-      if (sourceZone) {
-        this.nodeZones.set(link.target, sourceZone)
-        const node = this.nodes.find(n => n.id === link.target)
-        if (node) node.zone = sourceZone
-      }
-    }
-
-    ;(this.simulation.force("link") as any)?.links(this.links)
-    this.simulation.alpha(0.5).restart()
+  public updateLinks(_newLinks: Array<{ source: string; target: string }>): void {
+    // Links disabled — cards repel, don't attract
   }
 
   public destroy(): void {
