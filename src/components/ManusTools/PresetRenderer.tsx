@@ -19,6 +19,7 @@ const PresetRenderer: React.FC<Props> = ({ data, color }) => {
     case "checklist": return <ChecklistPreset d={data} />
     case "pipeline": return <PipelinePreset d={data} />
     case "chart": return <ChartPreset d={data} color={color} />
+    case "slides": return <SlidesPreset d={data} color={color} />
     default: return <FallbackPreset d={data} />
   }
 }
@@ -299,6 +300,86 @@ const ChartPreset: React.FC<{ d: any; color: string }> = ({ d, color }) => {
         ))}
       </div>
       {d.summary && <div className="text-xs text-white/50 pt-1">{d.summary}</div>}
+    </div>
+  )
+}
+
+// ── Slides ──────────────────────────────────────────────
+const SlidesPreset: React.FC<{ d: any; color: string }> = ({ d, color }) => {
+  const [currentSlide, setCurrentSlide] = React.useState(0)
+  const slides = d.slides || []
+  const containerRef = React.useRef<HTMLDivElement>(null)
+  const [isHovered, setIsHovered] = React.useState(false)
+
+  // Arrow key navigation when hovered
+  React.useEffect(() => {
+    if (!isHovered) return
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight" && currentSlide < slides.length - 1) {
+        setCurrentSlide(prev => prev + 1)
+      } else if (e.key === "ArrowLeft" && currentSlide > 0) {
+        setCurrentSlide(prev => prev - 1)
+      }
+    }
+    window.addEventListener("keydown", handleKey)
+    return () => window.removeEventListener("keydown", handleKey)
+  }, [isHovered, currentSlide, slides.length])
+
+  if (slides.length === 0) return <div className="text-sm text-white/50">No slides</div>
+
+  const slide = slides[currentSlide]
+
+  return (
+    <div
+      ref={containerRef}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {d.title && <div className="text-sm font-medium text-white/70 mb-3">{d.title}</div>}
+
+      {/* Current slide */}
+      <div className="p-3 rounded-lg bg-white/5 border border-white/10 min-h-[100px]">
+        <div className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color }}>
+          {slide.heading}
+        </div>
+        <div className="space-y-1.5">
+          {(slide.bullets || []).map((bullet: string, i: number) => (
+            <div key={i} className="flex items-start gap-2 text-sm">
+              <span className="text-white/30 mt-0.5 shrink-0">•</span>
+              <span className="text-white/70">{bullet}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Navigation dots */}
+      {slides.length > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-3">
+          <button
+            onClick={() => setCurrentSlide(prev => Math.max(0, prev - 1))}
+            className="text-white/20 hover:text-white/50 text-xs"
+            disabled={currentSlide === 0}
+          >
+            ←
+          </button>
+          {slides.map((_: any, i: number) => (
+            <button
+              key={i}
+              onClick={() => setCurrentSlide(i)}
+              className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                i === currentSlide ? "bg-white/70" : "bg-white/20 hover:bg-white/40"
+              }`}
+            />
+          ))}
+          <button
+            onClick={() => setCurrentSlide(prev => Math.min(slides.length - 1, prev + 1))}
+            className="text-white/20 hover:text-white/50 text-xs"
+            disabled={currentSlide === slides.length - 1}
+          >
+            →
+          </button>
+        </div>
+      )}
     </div>
   )
 }
