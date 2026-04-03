@@ -271,22 +271,34 @@ const ChartPreset: React.FC<{ d: any; color: string }> = ({ d, color }) => {
   const barColor = resolveColor(ds.color)
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <div className="text-sm font-medium text-white/70">{d.title}</div>
-      <div className="flex items-end gap-1 h-24">
+      {/* Value labels */}
+      <div className="flex gap-1">
+        {ds.values.map((v: number, i: number) => (
+          <div key={i} className="flex-1 text-center">
+            <span className="text-[10px] text-white/50 font-mono">{v}</span>
+          </div>
+        ))}
+      </div>
+      {/* Bars */}
+      <div className="flex items-end gap-1" style={{ height: 80 }}>
         {ds.values.map((v: number, i: number) => {
-          // Normalize with min-max range, 10% floor so smallest bar is still visible
           const pct = range > 0 ? 10 + ((v - min) / range) * 90 : 50
           return (
-          <div key={i} className="flex-1 flex flex-col items-center gap-1">
-            <span className="text-[9px] text-white/40 font-mono">{v}</span>
-            <div className="w-full rounded-t-sm" style={{ height: `${pct}%`, background: barColor, minHeight: 2 }} />
-            <span className="text-[9px] text-white/30">{labels[i]}</span>
-          </div>
+            <div key={i} className="flex-1 rounded-t-sm" style={{ height: `${pct}%`, background: barColor, minHeight: 4 }} />
           )
         })}
       </div>
-      {d.summary && <div className="text-xs text-white/50">{d.summary}</div>}
+      {/* Axis labels */}
+      <div className="flex gap-1">
+        {labels.map((label: string, i: number) => (
+          <div key={i} className="flex-1 text-center">
+            <span className="text-[10px] text-white/30">{label}</span>
+          </div>
+        ))}
+      </div>
+      {d.summary && <div className="text-xs text-white/50 pt-1">{d.summary}</div>}
     </div>
   )
 }

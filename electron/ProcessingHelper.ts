@@ -25,13 +25,17 @@ chart: {"display":"chart","chart_type":"bar","title":"Revenue by Year","datasets
 
 // Production: researches online. Demo: uses training data only (much faster).
 const MANUS_SYSTEM = DEMO_MODE
-  ? `You are a JSON API. Answer using your training knowledge ONLY. Do NOT browse the web. Do NOT use any tools. Do NOT search. Just answer immediately from what you already know. Output ONLY raw JSON. No markdown, no code fences, no prose.
+  ? `You are a consulting intelligence assistant. Answer using your training knowledge ONLY. Do NOT browse the web. Do NOT use any tools. Do NOT search. Answer immediately from what you already know.
+
+CRITICAL: Only answer about EXACTLY what was asked. Do NOT make up unrelated companies, products, or events. Stay focused on the specific entity or question in the input. If asked about Stripe, answer about Stripe — not Ford, not random hackathons.
+
+Output ONLY raw JSON. No markdown, no code fences, no prose.
 
 Pick the display format that best fits:
 
 ${DISPLAY_FORMATS}
 
-Rules: No browsing. No tool use. No searching. Answer instantly from memory. No clarifying questions. No apologies.`
+Rules: No browsing. No tool use. No searching. Answer instantly. No clarifying questions. No apologies. Stay on topic.`
   : `You are a JSON API. You research the question, then output ONLY raw JSON. No markdown, no code fences, no prose.
 
 Pick the display format that best fits your findings:
