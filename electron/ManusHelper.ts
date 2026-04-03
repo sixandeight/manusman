@@ -188,13 +188,20 @@ export class ManusHelper {
           }
         }
 
-        // If pending (waiting for user input), auto-continue
+        // If pending (waiting for user input), only auto-continue if Manus has already
+        // produced at least one assistant message. Otherwise the continue message confuses
+        // Manus into thinking there's no task context.
         if (status.status === "pending") {
-          console.log(`[ManusHelper] Task ${taskId} is pending — sending auto-continue`)
-          try {
-            await this.continueTask(taskId, "Continue. Do not wait for my input. Complete the task with what you have.")
-          } catch (err) {
-            console.error("[ManusHelper] Auto-continue failed:", err)
+          const hasAssistantOutput = status.output?.some(m => m.role === "assistant" && m.content?.length > 0)
+          if (hasAssistantOutput) {
+            console.log(`[ManusHelper] Task ${taskId} is pending with output — sending auto-continue`)
+            try {
+              await this.continueTask(taskId, "Continue. Complete the task. Output only the JSON.")
+            } catch (err) {
+              console.error("[ManusHelper] Auto-continue failed:", err)
+            }
+          } else {
+            console.log(`[ManusHelper] Task ${taskId} is pending with no output — waiting (not auto-continuing)`)
           }
         }
 
