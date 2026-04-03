@@ -204,10 +204,19 @@ const CardView: React.FC<{
         className="rounded-xl overflow-hidden"
         style={{
           background: "rgba(0, 0, 0, 0.65)",
-          borderLeft: `3px solid ${color}`,
-          boxShadow: `0 4px 20px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.06)`,
+          borderLeft: `3px solid ${
+            card.phase === "complete" ? "#4ade80" :
+            card.phase === "thinking" ? "#facc15" :
+            card.phase === "pending" ? "#888" :
+            color
+          }`,
+          boxShadow: card.phase === "thinking"
+            ? `0 4px 20px rgba(0,0,0,0.25), 0 0 8px rgba(250, 204, 21, 0.15)`
+            : card.phase === "complete"
+            ? `0 4px 20px rgba(0,0,0,0.25), 0 0 8px rgba(74, 222, 128, 0.15)`
+            : `0 4px 20px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.06)`,
           width: card.phase === "complete" ? (card.toolName === "prep" ? 520 : 480) : 300,
-          transition: "width 400ms ease",
+          transition: "width 400ms ease, border-color 400ms ease, box-shadow 400ms ease",
         }}
       >
         <div className="flex items-center justify-between px-4 h-8 cursor-grab">
@@ -215,13 +224,6 @@ const CardView: React.FC<{
             <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color }}>{label}</span>
             {card.isAuto && (
               <span className="text-[9px] font-medium uppercase px-1 py-0.5 rounded bg-white/10 text-white/30">auto</span>
-            )}
-            {card.phase !== "input" && card.phase !== "complete" && (
-              <span className={`w-2.5 h-2.5 rounded-full ${card.phase === "thinking" ? "animate-pulse" : ""}`}
-                style={{ background: card.phase === "thinking" ? "#facc15" : "#888" }} />
-            )}
-            {card.phase === "complete" && (
-              <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#4ade80" }} />
             )}
           </div>
           <button onClick={() => onDismiss(card.id)} className="text-white/20 hover:text-white/40 text-xs leading-none">x</button>
