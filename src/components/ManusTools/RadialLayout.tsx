@@ -174,7 +174,13 @@ const CardView: React.FC<{
 
   const { opacity, onHover, onLeave } = useAutoFade(card.phase, onDeleteRef)
 
-  useEffect(() => { if (card.phase === "input") inputRef.current?.focus() }, [card.phase])
+  useEffect(() => {
+    if (card.phase === "input") {
+      // Short delay so the DOM element exists before focusing
+      const t = setTimeout(() => inputRef.current?.focus(), 50)
+      return () => clearTimeout(t)
+    }
+  }, [card.phase])
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -320,7 +326,7 @@ const RadialLayout: React.FC<Props> = ({
     return () => engine.destroy()
   }, [])
 
-  // New prompt → create input card
+  // New prompt → create input card + auto-focus
   useEffect(() => {
     if (!activeToolPrompt) return
     const id = nextId(activeToolPrompt.toolName)
@@ -329,6 +335,8 @@ const RadialLayout: React.FC<Props> = ({
       phase: "input", query: "", result: null, parsedResult: null,
     }))
     physicsRef.current?.addNode(id, 300, 80)
+    // Enable mouse events so the input can receive focus
+    window.electronAPI.setIgnoreMouse(false)
     onToolCancel()
   }, [activeToolPrompt]) // eslint-disable-line react-hooks/exhaustive-deps
 
