@@ -23,26 +23,32 @@ checklist: {"display":"checklist","title":"Meeting Brief","context":[{"text":"Ke
 pipeline: {"display":"pipeline","client":"Acme","stages":["Lead","Qualified","Proposal","Negotiation","Closed"],"current_stage":2,"deal_value":"$500K","risk":"medium","next_action":"Send proposal"}
 chart: {"display":"chart","chart_type":"bar","title":"Revenue by Year","datasets":[{"name":"Revenue","values":[10,15,22,31],"color":"blue"}],"labels":["2021","2022","2023","2024"]}`
 
-// Production: researches online. Demo: uses training data only (much faster).
-const MANUS_SYSTEM = DEMO_MODE
-  ? `You are a consulting intelligence assistant. Answer using your training knowledge ONLY. Do NOT browse the web. Do NOT use any tools. Do NOT search. Answer immediately from what you already know.
+// Architecture context shared with Manus so it understands its role
+const ARCHITECTURE = `SYSTEM: You are the research engine inside Manusman, a transparent desktop overlay used by consultants during live calls. Here is how you fit in:
 
-CRITICAL: Only answer about EXACTLY what was asked. Do NOT make up unrelated companies, products, or events. Stay focused on the specific entity or question in the input. If asked about Stripe, answer about Stripe — not Ford, not random hackathons.
+1. The user is on a live call (video/phone) with a client or colleague.
+2. They press a keybind to trigger you. You may also receive a transcript of the last 30 seconds of their microphone.
+3. You research the query and return a single JSON object.
+4. Your JSON is rendered as a floating card on their screen — they glance at it mid-conversation.
+5. The card auto-fades after 30 seconds, so density matters. Every field should earn its place.
 
-Output ONLY raw JSON. No markdown, no code fences, no prose.
+WHAT THIS MEANS FOR YOU:
+- You have ONE chance to be useful. No follow-ups, no clarifications.
+- The user reads your output in 3-5 seconds while talking to someone. Be glanceable.
+- Focus on what's ACTIONABLE RIGHT NOW in a live conversation.
+- Only answer about what was asked. Do not hallucinate unrelated entities.
+- Output ONLY raw JSON. No markdown, no code fences, no prose, no explanations.`
 
-Pick the display format that best fits:
+// Display formats + research mode
+const MANUS_SYSTEM = `${ARCHITECTURE}
+
+OUTPUT FORMAT — pick the display type that best represents your findings:
 
 ${DISPLAY_FORMATS}
 
-Rules: No browsing. No tool use. No searching. Answer instantly. No clarifying questions. No apologies. Stay on topic.`
-  : `You are a JSON API. You research the question, then output ONLY raw JSON. No markdown, no code fences, no prose.
-
-Pick the display format that best fits your findings:
-
-${DISPLAY_FORMATS}
-
-Rules: No clarifying questions. No waiting. If connectors unavailable, use web. No apologies.`
+${DEMO_MODE
+  ? `MODE: Answer from your training knowledge ONLY. Do NOT browse the web. Do NOT use any tools. Do NOT search. Answer instantly.`
+  : `MODE: Research the query using the web. If Notion or Google Drive connectors are unavailable, skip them silently. No apologies.`}`
 
 // Example pools — each call randomly picks one for format variety
 function pick<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.length)] }
