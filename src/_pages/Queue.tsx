@@ -398,8 +398,7 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
             background: "linear-gradient(transparent, rgba(0,0,0,0.4))",
           }}
         >
-          <div className="flex items-center gap-1">
-            <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-green-400/60 animate-pulse" />
+          <div>
             <div
               className="overflow-hidden whitespace-nowrap font-mono"
               style={{
