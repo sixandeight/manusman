@@ -217,11 +217,11 @@ const CardView: React.FC<{
               <span className="text-[9px] font-medium uppercase px-1 py-0.5 rounded bg-white/10 text-white/30">auto</span>
             )}
             {card.phase !== "input" && card.phase !== "complete" && (
-              <span className={`w-1.5 h-1.5 rounded-full ${card.phase === "thinking" ? "animate-pulse" : ""}`}
+              <span className={`w-2.5 h-2.5 rounded-full ${card.phase === "thinking" ? "animate-pulse" : ""}`}
                 style={{ background: card.phase === "thinking" ? "#facc15" : "#888" }} />
             )}
             {card.phase === "complete" && (
-              <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#4ade80" }} />
+              <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#4ade80" }} />
             )}
           </div>
           <button onClick={() => onDismiss(card.id)} className="text-white/20 hover:text-white/40 text-xs leading-none">x</button>
