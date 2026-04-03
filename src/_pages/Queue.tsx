@@ -271,6 +271,7 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
   const handleToolSubmit = useCallback((toolName: string, args: Record<string, string>, screenshotPath?: string) => {
     const doSubmit = async () => {
       let transcript = ""
+      console.log(`[Mic] Buffer has ${micChunksRef.current.length} chunks (need >= 8)`)
       if (micChunksRef.current.length >= 8) {
         try {
           const blob = new Blob([...micChunksRef.current], { type: "audio/webm" })
