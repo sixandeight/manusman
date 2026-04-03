@@ -291,8 +291,10 @@ export class ProcessingHelper {
 
     let fullPrompt = prompt
     if (transcript) {
-      fullPrompt += `\n\nLIVE CONTEXT (last 30 seconds of user's microphone):\n"""\n${transcript}\n"""\nUse this context to inform your response. The user is currently in a live conversation.`
+      fullPrompt += `\n\nLIVE CONTEXT (last 30 seconds of user's microphone during a live call):\n"""\n${transcript}\n"""\nUse this transcript to inform your response. Prioritize what the user was just discussing.`
       console.log(`[ProcessingHelper] Injected ${transcript.length} chars of transcript`)
+    } else {
+      fullPrompt += `\n\nNOTE: The user is on a live call. No transcript was captured for this request.`
     }
 
     // Build attachments if screenshot provided
