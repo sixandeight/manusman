@@ -23,32 +23,22 @@ checklist: {"display":"checklist","title":"Meeting Brief","context":[{"text":"Ke
 pipeline: {"display":"pipeline","client":"Acme","stages":["Lead","Qualified","Proposal","Negotiation","Closed"],"current_stage":2,"deal_value":"$500K","risk":"medium","next_action":"Send proposal"}
 chart: {"display":"chart","chart_type":"bar","title":"Revenue by Year","datasets":[{"name":"Revenue","values":[10,15,22,31],"color":"blue"}],"labels":["2021","2022","2023","2024"]}`
 
-// Architecture context shared with Manus so it understands its role
-const ARCHITECTURE = `SYSTEM: You are the research engine inside Manusman, a transparent desktop overlay used by consultants during live calls. Here is how you fit in:
+// Hybrid prompt — A's speed + B's context, compressed
+const MANUS_SYSTEM = `SYSTEM: You are the research engine inside Manusman — a transparent overlay on a consultant's screen during live calls.
 
-1. The user is on a live call (video/phone) with a client or colleague.
-2. They press a keybind to trigger you. You may also receive a transcript of the last 30 seconds of their microphone.
-3. You research the query and return a single JSON object.
-4. Your JSON is rendered as a floating card on their screen — they glance at it mid-conversation.
-5. The card auto-fades after 30 seconds, so density matters. Every field should earn its place.
+The user pressed a keybind. You get: a QUERY (what they typed), optionally a TRANSCRIPT (last 30s of their mic), and optionally a SCREENSHOT. If transcript conflicts with query, trust the transcript — it's what's actually being discussed.
 
-WHAT THIS MEANS FOR YOU:
-- You have ONE chance to be useful. No follow-ups, no clarifications.
-- The user reads your output in 3-5 seconds while talking to someone. Be glanceable.
-- Focus on what's ACTIONABLE RIGHT NOW in a live conversation.
-- Only answer about what was asked. Do not hallucinate unrelated entities.
-- Output ONLY raw JSON. No markdown, no code fences, no prose, no explanations.`
+You return ONE raw JSON object. No markdown, no fences, no prose. It renders as a card they glance at for 3-5 seconds. It fades after 30s. Every field must earn its place.
 
-// Display formats + research mode
-const MANUS_SYSTEM = `${ARCHITECTURE}
+Rules: Numbers > adjectives. New info > background. Skip what a senior consultant already knows. No hallucinated entities. Only answer about what was asked.
 
-OUTPUT FORMAT — pick the display type that best represents your findings:
+Pick the best display format:
 
 ${DISPLAY_FORMATS}
 
 ${DEMO_MODE
-  ? `MODE: Answer from your training knowledge ONLY. Do NOT browse the web. Do NOT use any tools. Do NOT search. Answer instantly.`
-  : `MODE: Research the query using the web. If Notion or Google Drive connectors are unavailable, skip them silently. No apologies.`}`
+  ? `MODE: Use training knowledge ONLY. No browsing. No tools. No searching. Answer instantly.`
+  : `MODE: Research using the web. If connectors unavailable, skip silently. No apologies.`}`
 
 // Example pools — each call randomly picks one for format variety
 function pick<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.length)] }
@@ -85,19 +75,27 @@ const EXAMPLES: Record<string, string[]> = {
   ],
 }
 
-// 4 tools — intel (merged), deal, person, fact check
-const TOOL_PROMPTS: Record<string, (args: Record<string, string>) => string> = {
-  intel: (args) =>
-    `${MANUS_SYSTEM}\n\nYou are a consulting intelligence analyst. Your client is on a live call and needs instant intel. Analyze the input — it could be a company name, a person, a comparison ("X vs Y"), meeting prep ("prep for X call"), a market question, or a specific stat. Pick the display format that best fits what you find. Make it glanceable in 5 seconds.\n\nExample:\n${pick(EXAMPLES.intel)}\n\nInput: ${args.query}\nOutput:`,
+// 4 tools — transcript is passed in so it appears BEFORE Input/Output trigger
+const TOOL_PROMPTS: Record<string, (args: Record<string, string>, transcript?: string) => string> = {
+  intel: (args, transcript) => {
+    const ctx = transcript ? `\nTRANSCRIPT (last 30s of user's mic): "${transcript}"\n` : ""
+    return `${MANUS_SYSTEM}\n\nYou are a consulting intelligence analyst. Your client is on a live call and needs instant intel. Analyze the input — it could be a company name, a person, a comparison ("X vs Y"), meeting prep ("prep for X call"), a market question, or a specific stat. Pick the display format that best fits what you find. Make it glanceable in 5 seconds.\n\nExample:\n${pick(EXAMPLES.intel)}\n${ctx}\nInput: ${args.query}\nOutput:`
+  },
 
-  deal_status: (args) =>
-    `${MANUS_SYSTEM}\n\nYou are a deal desk analyst. Your client needs to know where a deal stands — pipeline stage, value, risk, blockers, and next steps. If you don't have real CRM data, construct the most plausible status based on public information.\n\nExample:\n${pick(EXAMPLES.deal_status)}\n\nInput: Deal status for ${args.client_name}\nOutput:`,
+  deal_status: (args, transcript) => {
+    const ctx = transcript ? `\nTRANSCRIPT (last 30s of user's mic): "${transcript}"\n` : ""
+    return `${MANUS_SYSTEM}\n\nYou are a deal desk analyst. Your client needs to know where a deal stands — pipeline stage, value, risk, blockers, and next steps. If you don't have real CRM data, construct the most plausible status based on public information.\n\nExample:\n${pick(EXAMPLES.deal_status)}\n${ctx}\nInput: Deal status for ${args.client_name}\nOutput:`
+  },
 
-  who_is_this: (args) =>
-    `${MANUS_SYSTEM}\n\nYou are a consulting analyst. Your client is on a live call and needs to know who they're talking to. Identify this person from the screenshot — name, role, company, recent activity. Make it immediately useful.\n\nExample:\n${pick(EXAMPLES.who_is_this)}\n\nInput: ${args.context || "See attached screenshot"}\nOutput:`,
+  who_is_this: (args, transcript) => {
+    const ctx = transcript ? `\nTRANSCRIPT (last 30s of user's mic): "${transcript}"\n` : ""
+    return `${MANUS_SYSTEM}\n\nYou are a consulting analyst. Your client is on a live call and needs to know who they're talking to. Identify this person from the screenshot — name, role, company, recent activity. Make it immediately useful.\n\nExample:\n${pick(EXAMPLES.who_is_this)}\n${ctx}\nInput: ${args.context || "See attached screenshot"}\nOutput:`
+  },
 
-  live_fact_check: (args) =>
-    `${MANUS_SYSTEM}\n\nYou are a real-time fact-checker. Someone just made a claim during a live call — verify it immediately. Clear verdict, evidence, confidence. Your client needs to know in 3 seconds.\n\nExample:\n${pick(EXAMPLES.live_fact_check)}\n\nInput: ${args.claim}\nOutput:`,
+  live_fact_check: (args, transcript) => {
+    const ctx = transcript ? `\nTRANSCRIPT (last 30s of user's mic): "${transcript}"\n` : ""
+    return `${MANUS_SYSTEM}\n\nYou are a real-time fact-checker. Someone just made a claim during a live call — verify it immediately. Clear verdict, evidence, confidence. Your client needs to know in 3 seconds.\n\nExample:\n${pick(EXAMPLES.live_fact_check)}\n${ctx}\nInput: ${args.claim}\nOutput:`
+  },
 }
 
 export type ManusToolName = "intel" | "deal_status" | "who_is_this" | "live_fact_check"
@@ -293,14 +291,10 @@ export class ProcessingHelper {
     const transcript = args._transcript || ""
     delete args._transcript
 
-    const prompt = promptBuilder(args)
-
-    let fullPrompt = prompt
+    // Transcript is passed to prompt builder so it appears BEFORE Input/Output trigger
+    const fullPrompt = promptBuilder(args, transcript || undefined)
     if (transcript) {
-      fullPrompt += `\n\nLIVE CONTEXT (last 30 seconds of user's microphone during a live call):\n"""\n${transcript}\n"""\nUse this transcript to inform your response. Prioritize what the user was just discussing.`
       console.log(`[ProcessingHelper] Injected ${transcript.length} chars of transcript`)
-    } else {
-      fullPrompt += `\n\nNOTE: The user is on a live call. No transcript was captured for this request.`
     }
 
     // Build attachments if screenshot provided
