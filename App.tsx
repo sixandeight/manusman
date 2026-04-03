@@ -1,0 +1,243 @@
+import { ToastProvider } from "./components/ui/toast"
+import Queue from "./_pages/Queue"
+import Onboarding from "./_pages/Onboarding"
+import { ToastViewport } from "@radix-ui/react-toast"
+import { useEffect, useRef, useState } from "react"
+import Solutions from "./_pages/Solutions"
+import { QueryClient, QueryClientProvider } from "react-query"
+
+declare global {
+  interface Window {
+    electronAPI: {
+      //RANDOM GETTER/SETTERS
+      updateContentDimensions: (dimensions: {
+        width: number
+        height: number
+      }) => Promise<void>
+      getScreenshots: () => Promise<Array<{ path: string; preview: string }>>
+
+      //GLOBAL EVENTS
+      onUnauthorized: (callback: () => void) => () => void
+      onScreenshotTaken: (
+        callback: (data: { path: string; preview: string }) => void
+      ) => () => void
+      onProcessingNoScreenshots: (callback: () => void) => () => void
+      onResetView: (callback: () => void) => () => void
+      takeScreenshot: () => Promise<void>
+
+      //INITIAL SOLUTION EVENTS
+      deleteScreenshot: (
+        path: string
+      ) => Promise<{ success: boolean; error?: string }>
+      onSolutionStart: (callback: () => void) => () => void
+      onSolutionError: (callback: (error: string) => void) => () => void
+      onSolutionSuccess: (callback: (data: any) => void) => () => void
+      onProblemExtracted: (callback: (data: any) => void) => () => void
+
+      onDebugSuccess: (callback: (data: any) => void) => () => void
+
+      onDebugStart: (callback: () => void) => () => void
+      onDebugError: (callback: (error: string) => void) => () => void
+
+      // Audio Processing
+      analyzeAudioFromBase64: (data: string, mimeType: string) => Promise<{ text: string; timestamp: number }>
+      analyzeAudioFile: (path: string) => Promise<{ text: string; timestamp: number }>
+
+      moveWindowLeft: () => Promise<void>
+      moveWindowRight: () => Promise<void>
+      moveWindowUp: () => Promise<void>
+      moveWindowDown: () => Promise<void>
+      quitApp: () => Promise<void>
+      
+      // LLM Model Management
+      getCurrentLlmConfig: () => Promise<{ provider: "ollama" | "gemini"; model: string; isOllama: boolean }>
+      getAvailableOllamaModels: () => Promise<string[]>
+      switchToOllama: (model?: string, url?: string) => Promise<{ success: boolean; error?: string }>
+      switchToGemini: (apiKey?: string) => Promise<{ success: boolean; error?: string }>
+      testLlmConnection: () => Promise<{ success: boolean; error?: string }>
+      
+      // Click-through
+      setIgnoreMouse: (ignore: boolean) => Promise<void>
+
+      // Manus Tools
+      runManusTool: (toolName: string, args: Record<string, string>, screenshotPath?: string) => Promise<any>
+      getLastScreenshotPath: () => Promise<string | null>
+      onManusToolPrompt: (callback: (data: { toolName: string; needsScreenshot: boolean }) => void) => () => void
+      onManusToolStarted: (callback: (data: { toolName: string; args: Record<string, string> }) => void) => () => void
+      onManusToolStatus: (callback: (data: { toolName: string; status: string }) => void) => () => void
+      onManusToolResult: (callback: (data: any) => void) => () => void
+      onManusToolPartial: (callback: (data: any) => void) => () => void
+      onManusToolError: (callback: (data: { toolName: string; error: string }) => void) => () => void
+
+      // Onboarding
+      onboardingGetStatus: () => Promise<{
+        manusApiKey: string
+        manusConnected: boolean
+        notionConnected: boolean
+        gdriveConnected: boolean
+        onboardingComplete: boolean
+        completedAt?: string
+      }>
+      onboardingIsComplete: () => Promise<boolean>
+      onboardingSaveManusKey: (apiKey: string) => Promise<{ success: boolean; error?: string }>
+      onboardingCheckConnectors: () => Promise<{ notion: boolean; gdrive: boolean; error?: string }>
+      onboardingComplete: () => Promise<{ success: true }>
+      onboardingReset: () => Promise<{ success: true }>
+      onboardingOpenManus: () => Promise<{ success: true }>
+      onboardingOpenConnectors: () => Promise<{ success: true }>
+      openExternalUrl: (url: string) => Promise<{ success: true }>
+
+      invoke: (channel: string, ...args: any[]) => Promise<any>
+    }
+  }
+}
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: Infinity,
+      cacheTime: Infinity
+    }
+  }
+})
+
+const App: React.FC = () => {
+  const [view, setView] = useState<"loading" | "onboarding" | "queue" | "solutions" | "debug">("loading")
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // Check onboarding status on startup using the proper IPC method
+  useEffect(() => {
+    window.electronAPI.onboardingIsComplete()
+      .then((complete: boolean) => {
+        setView(complete ? "queue" : "onboarding")
+      })
+      .catch(() => {
+        // If check fails, go straight to queue (backwards compatible)
+        setView("queue")
+      })
+  }, [])
+
+  // Effect for reset-view
+  useEffect(() => {
+    const cleanup = window.electronAPI.onResetView(() => {
+      console.log("Received 'reset-view' message from main process.")
+      queryClient.invalidateQueries(["screenshots"])
+      queryClient.invalidateQueries(["problem_statement"])
+      queryClient.invalidateQueries(["solution"])
+      queryClient.invalidateQueries(["new_solution"])
+      setView("queue")
+    })
+
+    return () => {
+      cleanup()
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!containerRef.current) return
+
+    const updateHeight = () => {
+      if (!containerRef.current) return
+      const height = containerRef.current.scrollHeight
+      const width = containerRef.current.scrollWidth
+      window.electronAPI?.updateContentDimensions({ width, height })
+    }
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateHeight()
+    })
+
+    // Initial height update
+    updateHeight()
+
+    // Observe for changes
+    resizeObserver.observe(containerRef.current)
+
+    // Also update height when view changes
+    const mutationObserver = new MutationObserver(() => {
+      updateHeight()
+    })
+
+    mutationObserver.observe(containerRef.current, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      characterData: true
+    })
+
+    return () => {
+      resizeObserver.disconnect()
+      mutationObserver.disconnect()
+    }
+  }, [view])
+
+  useEffect(() => {
+    const cleanupFunctions = [
+      window.electronAPI.onSolutionStart(() => {
+        setView("solutions")
+        console.log("starting processing")
+      }),
+
+      window.electronAPI.onUnauthorized(() => {
+        queryClient.removeQueries(["screenshots"])
+        queryClient.removeQueries(["solution"])
+        queryClient.removeQueries(["problem_statement"])
+        setView("queue")
+        console.log("Unauthorized")
+      }),
+      // Update this reset handler
+      window.electronAPI.onResetView(() => {
+        console.log("Received 'reset-view' message from main process")
+
+        queryClient.removeQueries(["screenshots"])
+        queryClient.removeQueries(["solution"])
+        queryClient.removeQueries(["problem_statement"])
+        setView("queue")
+        console.log("View reset to 'queue' via Command+R shortcut")
+      }),
+      window.electronAPI.onProblemExtracted((data: any) => {
+        if (view === "queue") {
+          console.log("Problem extracted successfully")
+          queryClient.invalidateQueries(["problem_statement"])
+          queryClient.setQueryData(["problem_statement"], data)
+        }
+      })
+    ]
+    return () => cleanupFunctions.forEach((cleanup) => cleanup())
+  }, [])
+
+  // During onboarding, use a solid background (not transparent overlay)
+  const isOnboarding = view === "onboarding"
+
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        width: "100vw",
+        height: "100vh",
+        background: isOnboarding ? "#0a1628" : "transparent",
+        overflow: "hidden",
+        pointerEvents: isOnboarding ? "auto" : "none",
+      }}
+    >
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>
+          {view === "loading" ? (
+            <div style={{ width: "100vw", height: "100vh", background: "#0a1628" }} />
+          ) : view === "onboarding" ? (
+            <Onboarding onComplete={() => setView("queue")} />
+          ) : view === "queue" ? (
+            <Queue setView={setView} />
+          ) : view === "solutions" ? (
+            <Solutions setView={setView} />
+          ) : (
+            <></>
+          )}
+          <ToastViewport />
+        </ToastProvider>
+      </QueryClientProvider>
+    </div>
+  )
+}
+
+export default App
