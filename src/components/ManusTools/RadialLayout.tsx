@@ -15,6 +15,7 @@ interface Card {
   query: string
   result: any | null
   parsedResult: any | null
+  isAuto?: boolean
 }
 
 const TOOL_COLORS: Record<string, string> = {
@@ -212,6 +213,9 @@ const CardView: React.FC<{
         <div className="flex items-center justify-between px-4 h-8 cursor-grab">
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color }}>{label}</span>
+            {card.isAuto && (
+              <span className="text-[9px] font-medium uppercase px-1 py-0.5 rounded bg-white/10 text-white/30">auto</span>
+            )}
             {card.phase !== "input" && card.phase !== "complete" && (
               <span className={`w-1.5 h-1.5 rounded-full ${card.phase === "thinking" ? "animate-pulse" : ""}`}
                 style={{ background: card.phase === "thinking" ? "#facc15" : "#888" }} />
@@ -417,10 +421,14 @@ const RadialLayout: React.FC<Props> = ({
 
   // Use ref for onToolSubmit to avoid handleSubmit instability
   const handleSubmit = useCallback((cardId: string, toolName: string, args: Record<string, string>, screenshot?: string) => {
+    // Extract isAuto flag if present
+    const isAuto = args._isAuto === "true"
+    delete args._isAuto
+
     const q = queues.current.get(toolName) || []
     q.push(cardId)
     queues.current.set(toolName, q)
-    setCards(prev => { const n = new Map(prev); const c = n.get(cardId); if (c) n.set(cardId, { ...c, phase: "pending" }); return n })
+    setCards(prev => { const n = new Map(prev); const c = n.get(cardId); if (c) n.set(cardId, { ...c, phase: "pending", isAuto }); return n })
     onToolSubmitRef.current(toolName, args, screenshot)
   }, []) // stable — uses ref
 

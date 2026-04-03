@@ -63,7 +63,7 @@ export function usePassiveListener({ micChunksRef, onTrigger, autoCardCount, ena
       try {
         const blob = new Blob(recentChunks, { type: "audio/webm" })
         const arrayBuffer = await blob.arrayBuffer()
-        const transcript = await window.electronAPI.transcribeAudioBuffer(arrayBuffer, "audio/webm")
+        const transcript = await (window as any).electronAPI.transcribeAudioBuffer(arrayBuffer, "audio/webm")
 
         if (!transcript || transcript.length < 3) return
 

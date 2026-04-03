@@ -310,7 +310,7 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
 
   const handleAutoTrigger = useCallback((entity: string) => {
     console.log(`[PassiveListener] Auto-triggering intel for: "${entity}"`)
-    handleToolSubmit("intel", { query: entity })
+    handleToolSubmit("intel", { query: entity, _isAuto: "true" })
     setAutoCardCount(prev => prev + 1)
     // Decrement after card fades (30s fade delay + 15s fade = 45s)
     setTimeout(() => setAutoCardCount(prev => Math.max(0, prev - 1)), 45000)
