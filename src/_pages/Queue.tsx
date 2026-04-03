@@ -11,6 +11,7 @@ import {
 import QueueCommands from "../components/Queue/QueueCommands"
 import ModelSelector from "../components/ui/ModelSelector"
 import RadialLayout from "../components/ManusTools/RadialLayout"
+import { usePassiveListener } from "../components/ManusTools/PassiveListener"
 
 interface QueueProps {
   setView: React.Dispatch<React.SetStateAction<"queue" | "solutions" | "debug">>
@@ -303,6 +304,24 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
     }
     doSubmit()
   }, []) // micChunksRef is a ref — stable
+
+  // Passive listener — auto-triggers intel cards from transcript entities
+  const [autoCardCount, setAutoCardCount] = useState(0)
+
+  const handleAutoTrigger = useCallback((entity: string) => {
+    console.log(`[PassiveListener] Auto-triggering intel for: "${entity}"`)
+    handleToolSubmit("intel", { query: entity })
+    setAutoCardCount(prev => prev + 1)
+    // Decrement after card fades (30s fade delay + 15s fade = 45s)
+    setTimeout(() => setAutoCardCount(prev => Math.max(0, prev - 1)), 45000)
+  }, [handleToolSubmit])
+
+  usePassiveListener({
+    micChunksRef,
+    onTrigger: handleAutoTrigger,
+    autoCardCount,
+    enabled: micStatus === "live",
+  })
 
   const handleTooltipVisibilityChange = (visible: boolean, height: number) => {
     setIsTooltipVisible(visible)
