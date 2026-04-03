@@ -316,9 +316,22 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
     setTimeout(() => setAutoCardCount(prev => Math.max(0, prev - 1)), 45000)
   }, [handleToolSubmit])
 
+  // Live transcript — rolling text from passive listener
+  const [liveTranscript, setLiveTranscript] = useState<string[]>([])
+
+  const handleTranscript = useCallback((text: string) => {
+    setLiveTranscript(prev => {
+      const next = [...prev, text]
+      // Keep last 10 snippets (~30s at 3s intervals)
+      while (next.length > 10) next.shift()
+      return next
+    })
+  }, [])
+
   usePassiveListener({
     micChunksRef,
     onTrigger: handleAutoTrigger,
+    onTranscript: handleTranscript,
     autoCardCount,
     enabled: micStatus === "live",
   })
@@ -376,27 +389,31 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
         running: {runningTools.size} | results: {toolResults.length} | prompt: {activeToolPrompt ? activeToolPrompt.toolName : "none"} | chat: {isChatOpen ? "open" : "closed"}
       </div>
 
-      {/* Mic status — bottom-right */}
-      <div
-        className="fixed bottom-2 right-2 z-[999] px-3 py-1 rounded font-mono"
-        style={{
-          pointerEvents: "auto",
-          background: micStatus === "live" ? "rgba(0, 200, 100, 0.15)" : "rgba(255, 100, 0, 0.15)",
-          border: `1px solid ${micStatus === "live" ? "rgba(0, 200, 100, 0.4)" : "rgba(255, 100, 0, 0.4)"}`,
-          color: micStatus === "live" ? "#0c6" : "#f64",
-          fontSize: "11px",
-          maxWidth: 400,
-        }}
-        onMouseEnter={() => window.electronAPI.setIgnoreMouse(false)}
-        onMouseLeave={() => window.electronAPI.setIgnoreMouse(true)}
-      >
-        <div>{micStatus === "live" ? `mic ${Math.round(micChunkCount * 0.25)}s / 30s` : `mic: ${micStatus}`}</div>
-        {lastTranscript && (
-          <div className="mt-1 text-white/60 truncate" style={{ fontSize: "10px" }}>
-            {lastTranscript}
+      {/* Live transcript strip — bottom of screen */}
+      {liveTranscript.length > 0 && (
+        <div
+          className="fixed bottom-0 left-0 right-0 z-[998] px-6 py-2"
+          style={{
+            pointerEvents: "none",
+            background: "linear-gradient(transparent, rgba(0,0,0,0.4))",
+          }}
+        >
+          <div className="flex items-center gap-1">
+            <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-green-400/60 animate-pulse" />
+            <div
+              className="overflow-hidden whitespace-nowrap font-mono"
+              style={{
+                fontSize: "12px",
+                color: "rgba(255,255,255,0.4)",
+                maskImage: "linear-gradient(to right, transparent, black 10%, black 90%, transparent)",
+                WebkitMaskImage: "linear-gradient(to right, transparent, black 10%, black 90%, transparent)",
+              }}
+            >
+              {liveTranscript.join(" · ")}
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Command bar — top-left, interactive (DEBUG: blue tint) */}
       <div

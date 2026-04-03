@@ -5,7 +5,8 @@ import { useEffect, useRef, useCallback } from "react"
 interface PassiveListenerOptions {
   micChunksRef: React.MutableRefObject<Blob[]>
   onTrigger: (entity: string) => void
-  autoCardCount: number  // current number of visible auto-cards
+  onTranscript?: (text: string) => void  // surfaces live transcript text to UI
+  autoCardCount: number
   enabled: boolean
 }
 
@@ -14,7 +15,7 @@ const GLOBAL_COOLDOWN = 10000    // 10s between any auto-trigger
 const MAX_AUTO_CARDS = 3
 const CHECK_INTERVAL = 3000      // check every 3s
 
-export function usePassiveListener({ micChunksRef, onTrigger, autoCardCount, enabled }: PassiveListenerOptions) {
+export function usePassiveListener({ micChunksRef, onTrigger, onTranscript, autoCardCount, enabled }: PassiveListenerOptions) {
   const cooldowns = useRef<Map<string, number>>(new Map())
   const lastGlobalTrigger = useRef(0)
 
@@ -66,6 +67,9 @@ export function usePassiveListener({ micChunksRef, onTrigger, autoCardCount, ena
         const transcript = await (window as any).electronAPI.transcribeAudioBuffer(arrayBuffer, "audio/webm")
 
         if (!transcript || transcript.length < 3) return
+
+        // Surface transcript to UI
+        if (onTranscript) onTranscript(transcript)
 
         const entities = extractEntities(transcript)
 
