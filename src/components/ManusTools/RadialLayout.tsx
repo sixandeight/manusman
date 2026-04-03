@@ -18,21 +18,21 @@ interface Card {
 }
 
 const TOOL_COLORS: Record<string, string> = {
-  intel: "#2563eb", deal_status: "#ea580c", who_is_this: "#7c3aed", live_fact_check: "#d97706",
+  intel: "#2563eb", deal_status: "#ea580c", prep: "#7c3aed", live_fact_check: "#d97706",
 }
 const TOOL_LABELS: Record<string, string> = {
-  intel: "INTEL", deal_status: "DEAL", who_is_this: "PERSON", live_fact_check: "FACT CHECK",
+  intel: "INTEL", deal_status: "DEAL", prep: "PREP", live_fact_check: "FACT CHECK",
 }
 const INPUT_PLACEHOLDERS: Record<string, string> = {
   intel: "Company, person, or topic...", deal_status: "Client name...",
-  who_is_this: "Extra context (optional)...", live_fact_check: "Claim to verify...",
+  prep: "Context (optional)...", live_fact_check: "Claim to verify...",
 }
 
 function buildArgs(toolName: string, input: string): Record<string, string> {
   switch (toolName) {
     case "intel": return { query: input }
     case "deal_status": return { client_name: input }
-    case "who_is_this": return { context: input || "See attached screenshot" }
+    case "prep": return { context: input || "See attached screenshot" }
     case "live_fact_check": return { claim: input }
     default: return { query: input }
   }
@@ -205,7 +205,7 @@ const CardView: React.FC<{
           background: "rgba(0, 0, 0, 0.65)",
           borderLeft: `3px solid ${color}`,
           boxShadow: `0 4px 20px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.06)`,
-          width: card.phase === "complete" ? 480 : 300,
+          width: card.phase === "complete" ? (card.toolName === "prep" ? 520 : 480) : 300,
           transition: "width 400ms ease",
         }}
       >

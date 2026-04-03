@@ -64,9 +64,9 @@ const EXAMPLES: Record<string, string[]> = {
     `Input: Deal status for Snowflake\nOutput: {"display":"pipeline","client":"Snowflake","stages":["Prospecting","Discovery","Proposal","Negotiation","Closed"],"current_stage":3,"deal_value":"$2M ARR","risk":"medium","next_action":"Final pricing review","next_action_due":"Next week","blockers":["Legal review pending"]}`,
     `Input: Deal status for Acme Corp\nOutput: {"display":"checklist","title":"Deal Status: Acme Corp","subtitle":"$500K opportunity, early stage","context":[{"text":"Initial demo completed last Tuesday","priority":"high"},{"text":"Budget approved for Q3","priority":"medium"},{"text":"Competing with Salesforce bid","priority":"high"}],"items":[{"text":"Send technical requirements doc","checked":false},{"text":"Schedule security review call","checked":false}]}`,
   ],
-  who_is_this: [
-    `Input: Who is this person?\nOutput: {"display":"profile","name":"Jensen Huang","role":"CEO & Co-founder","company":"NVIDIA","details":["Founded NVIDIA 1993","Net worth ~$120B","Drives AI chip strategy"],"sentiment":"positive","summary":"Visionary CEO leading AI revolution"}`,
-    `Input: Person at Stripe\nOutput: {"display":"checklist","title":"Person: Patrick Collison","subtitle":"CEO & Co-founder, Stripe","context":[{"text":"Built Auctomatic, acquired at age 19","priority":"high"},{"text":"Stripe valued at $91.5B","priority":"high"}],"items":[{"text":"Ask about enterprise pricing","checked":false},{"text":"Mention Series I valuation","checked":false}]}`,
+  prep: [
+    `Input: Screenshot of calendar invite for Snowflake Q3 Review\nOutput: {"display":"slides","title":"Prep: Snowflake Q3 Review","slides":[{"heading":"Company Snapshot","bullets":["$2.1B ARR, 30% YoY growth","Consumption-based pricing","Cortex AI platform launching"]},{"heading":"Key People","bullets":["Sridhar Ramaswamy, CEO","Chris Degnan, CRO","Benoit Dageville, Co-founder"]},{"heading":"Talking Points","bullets":["Ask about Cortex AI adoption","Discuss credit vs commit model","Probe competitive response to Databricks"]},{"heading":"Watch Out","bullets":["Consumption growth slowing","CFO transition announced","Enterprise renewal cycle"]}]}`,
+    `Input: Screenshot of LinkedIn profile\nOutput: {"display":"slides","title":"Prep: Meeting with Jensen Huang","slides":[{"heading":"Who","bullets":["Jensen Huang, CEO & Co-founder","NVIDIA, founded 1993","Net worth ~$158B"]},{"heading":"NVIDIA Now","bullets":["$3.4T market cap","$130B revenue FY2025","Blackwell GPU shipping"]},{"heading":"Talking Points","bullets":["AI infrastructure roadmap","Sovereign AI partnerships","CUDA ecosystem moat"]},{"heading":"Watch Out","bullets":["Export controls to China","AMD MI300X competition","Customer concentration risk"]}]}`,
   ],
   live_fact_check: [
     `Input: Did OpenAI raise $10B from Microsoft?\nOutput: {"display":"verdict","claim":"OpenAI raised $10B from Microsoft","verdict":"true","confidence":"high","evidence":"Microsoft confirmed a $10B investment in OpenAI in Jan 2023","source":"Microsoft blog"}`,
@@ -87,9 +87,9 @@ const TOOL_PROMPTS: Record<string, (args: Record<string, string>, transcript?: s
     return `${MANUS_SYSTEM}\n\nYou are a deal desk analyst. Your client needs to know where a deal stands — pipeline stage, value, risk, blockers, and next steps. If you don't have real CRM data, construct the most plausible status based on public information.\n\nExample:\n${pick(EXAMPLES.deal_status)}\n${ctx}\nInput: Deal status for ${args.client_name}\nOutput:`
   },
 
-  who_is_this: (args, transcript) => {
+  prep: (args, transcript) => {
     const ctx = transcript ? `\nTRANSCRIPT (last 30s of user's mic): "${transcript}"\n` : ""
-    return `${MANUS_SYSTEM}\n\nYou are a consulting analyst. Your client is on a live call and needs to know who they're talking to. Identify this person from the screenshot — name, role, company, recent activity. Make it immediately useful.\n\nExample:\n${pick(EXAMPLES.who_is_this)}\n${ctx}\nInput: ${args.context || "See attached screenshot"}\nOutput:`
+    return `${MANUS_SYSTEM}\n\nYou are a meeting prep analyst. Your client is about to enter a call. Look at the screenshot — it might show a calendar invite, email, LinkedIn profile, or website. Generate a series of prep slides they can flick through during the call. Return 3-5 slides covering: overview, key people, talking points, and risks/watchouts. Each slide has a heading and 3-5 bullet points.\n\nExample:\n${pick(EXAMPLES.prep)}\n${ctx}\nInput: ${args.context || "See attached screenshot"}\nOutput:`
   },
 
   live_fact_check: (args, transcript) => {
@@ -98,7 +98,7 @@ const TOOL_PROMPTS: Record<string, (args: Record<string, string>, transcript?: s
   },
 }
 
-export type ManusToolName = "intel" | "deal_status" | "who_is_this" | "live_fact_check"
+export type ManusToolName = "intel" | "deal_status" | "prep" | "live_fact_check"
 
 export class ProcessingHelper {
   private appState: AppState

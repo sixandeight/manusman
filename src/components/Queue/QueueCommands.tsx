@@ -15,7 +15,7 @@ const KEYBINDS = [
   { keys: "─", label: "─── Tools ───" },
   { keys: "Ctrl+1", label: "Intel (company/person/competitive)" },
   { keys: "Ctrl+2", label: "Deal status" },
-  { keys: "Ctrl+3", label: "Who is this? (screenshot)" },
+  { keys: "Ctrl+3", label: "Meeting prep (screenshot)" },
   { keys: "Ctrl+4", label: "Fact check (screenshot)" },
 ]
 
@@ -51,8 +51,8 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
 
         <div className="h-5 w-px bg-white/20" />
 
-        <button className={btnDefault} onClick={() => window.electronAPI.invoke("trigger-manus-tool", "who_is_this")}>
-          3 Who?
+        <button className={btnDefault} onClick={() => window.electronAPI.invoke("trigger-manus-tool", "prep")}>
+          3 Prep
         </button>
         <button className={btnDefault} onClick={() => window.electronAPI.invoke("trigger-manus-tool", "live_fact_check")}>
           4 Fact

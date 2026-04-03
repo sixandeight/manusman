@@ -82,7 +82,7 @@ export class ShortcutsHelper {
     const keybindTools = [
       { key: "CommandOrControl+1", tool: "intel", screenshot: false },
       { key: "CommandOrControl+2", tool: "deal_status", screenshot: false },
-      { key: "CommandOrControl+3", tool: "who_is_this", screenshot: true },
+      { key: "CommandOrControl+3", tool: "prep", screenshot: true },
       { key: "CommandOrControl+4", tool: "live_fact_check", screenshot: true },
     ] as const
 
