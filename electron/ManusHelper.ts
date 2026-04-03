@@ -276,6 +276,8 @@ export class ManusHelper {
         for (const block of msg.content) {
           if ((block.type === "output_text" || block.type === "text") && block.text) {
             const cleaned = block.text.trim().replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim()
+              // Repair common Manus JSON typos (e.g. "score">6 instead of "score":6)
+              .replace(/"(\w+)">([\d.]+)/g, '"$1":$2')
             try {
               const parsed = JSON.parse(cleaned)
               if (parsed.display) {
