@@ -40,7 +40,7 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
 
   // Manus tool state
   const [activeToolPrompt, setActiveToolPrompt] = useState<{ toolName: string; needsScreenshot: boolean } | null>(null)
-  const [runningTools, setRunningTools] = useState<Map<string, string>>(new Map()) // toolName -> status
+  const [runningTools, setRunningTools] = useState<Map<string, string>>(new Map())
   const [toolResults, setToolResults] = useState<any[]>([])
 
   const barRef = useRef<HTMLDivElement>(null)
@@ -208,7 +208,6 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
         setToolResults(prev => [data, ...prev])
       }),
       window.electronAPI.onManusToolPartial((data) => {
-        // Partials only update running status — don't create result entries
         setRunningTools(prev => new Map(prev).set(data.toolName, "thinking"))
       }),
       window.electronAPI.onManusToolError((data) => {
@@ -220,7 +219,7 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
         showToast("Tool Error", `${data.toolName}: ${data.error}`, "error")
       }),
 
-      // onScreenshotTaken is handled by the dedicated useEffect below (seamless screenshot-to-LLM flow)
+      window.electronAPI.onScreenshotTaken(() => refetch()),
       window.electronAPI.onResetView(() => refetch()),
       window.electronAPI.onSolutionError((error: string) => {
         showToast(
@@ -248,17 +247,12 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
 
   // Seamless screenshot-to-LLM flow
   useEffect(() => {
-    // Listen for screenshot taken event
     const unsubscribe = window.electronAPI.onScreenshotTaken(async (data) => {
-      // Refetch screenshots to update the queue
       await refetch();
-      // Show loading in chat
       setChatLoading(true);
       try {
-        // Get the latest screenshot path
         const latest = data?.path || (Array.isArray(data) && data.length > 0 && data[data.length - 1]?.path);
         if (latest) {
-          // Call the LLM to process the screenshot
           const response = await window.electronAPI.invoke("analyze-image-file", latest);
           setChatMessages((msgs) => [...msgs, { role: "gemini", text: response.text }]);
         }
@@ -273,7 +267,7 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
     };
   }, [refetch]);
 
-  // Stable callback for tool submission — avoids recreating on every render
+  // Stable callback for tool submission
   const handleToolSubmit = useCallback((toolName: string, args: Record<string, string>, screenshotPath?: string) => {
     const doSubmit = async () => {
       let transcript = ""
@@ -285,7 +279,6 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
           transcript = await window.electronAPI.transcribeAudioBuffer(arrayBuffer, "audio/webm")
           if (transcript) {
             setLastTranscript(transcript)
-            // Clear after 5s
             setTimeout(() => setLastTranscript(""), 5000)
           } else {
             setLastTranscript("(empty)")
@@ -303,7 +296,7 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
       window.electronAPI.runManusTool(toolName, { ...args, _transcript: transcript }, screenshotPath)
     }
     doSubmit()
-  }, []) // micChunksRef is a ref — stable
+  }, [])
 
   // Passive listener — auto-triggers intel cards from transcript entities
   const [autoCardCount, setAutoCardCount] = useState(0)
@@ -312,17 +305,15 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
     console.log(`[PassiveListener] Auto-triggering intel for: "${entity}"`)
     handleToolSubmit("intel", { query: entity, _isAuto: "true" })
     setAutoCardCount(prev => prev + 1)
-    // Decrement after card fades (30s fade delay + 15s fade = 45s)
     setTimeout(() => setAutoCardCount(prev => Math.max(0, prev - 1)), 45000)
   }, [handleToolSubmit])
 
-  // Live transcript — rolling text from passive listener
+  // Live transcript state kept for PassiveListener hook (not rendered)
   const [liveTranscript, setLiveTranscript] = useState<string[]>([])
 
   const handleTranscript = useCallback((text: string) => {
     setLiveTranscript(prev => {
       const next = [...prev, text]
-      // Keep last 10 snippets (~30s at 3s intervals)
       while (next.length > 10) next.shift()
       return next
     })
@@ -351,7 +342,6 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
 
   const handleModelChange = (provider: "ollama" | "gemini", model: string) => {
     setCurrentModel({ provider, model })
-    // Update chat messages to reflect the model change
     const modelName = provider === "ollama" ? model : "Gemini 3 Pro"
     setChatMessages((msgs) => [...msgs, { 
       role: "gemini", 
@@ -373,15 +363,16 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
         background: "transparent",
       }}
     >
-      {/* DEBUG: state indicator — always visible bottom-left */}
+      {/* DEBUG: state indicator — dark blue with white text */}
       <div
-        className="fixed bottom-2 left-2 z-[999] px-3 py-1 rounded font-mono"
+        className="fixed bottom-2 left-2 z-[999] px-3 py-1 rounded-lg font-mono"
         style={{
           pointerEvents: "auto",
-          background: "rgba(0, 255, 0, 0.15)",
-          border: "1px solid rgba(0, 255, 0, 0.4)",
-          color: "#0f0",
+          background: "rgba(15, 30, 80, 0.85)",
+          border: "1px solid rgba(59, 130, 246, 0.3)",
+          color: "#ffffff",
           fontSize: "11px",
+          boxShadow: "0 2px 12px rgba(0, 0, 0, 0.15)",
         }}
         onMouseEnter={() => window.electronAPI.setIgnoreMouse(false)}
         onMouseLeave={() => window.electronAPI.setIgnoreMouse(true)}
@@ -389,39 +380,17 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
         running: {runningTools.size} | results: {toolResults.length} | prompt: {activeToolPrompt ? activeToolPrompt.toolName : "none"} | chat: {isChatOpen ? "open" : "closed"}
       </div>
 
-      {/* Live transcript strip — bottom of screen */}
-      {liveTranscript.length > 0 && (
-        <div
-          className="fixed bottom-0 left-0 right-0 z-[998] px-6 py-2"
-          style={{
-            pointerEvents: "none",
-            background: "linear-gradient(transparent, rgba(0,0,0,0.4))",
-          }}
-        >
-          <div>
-            <div
-              className="overflow-hidden whitespace-nowrap font-mono"
-              style={{
-                fontSize: "12px",
-                color: "rgba(255,255,255,0.4)",
-                maskImage: "linear-gradient(to right, transparent, black 10%, black 90%, transparent)",
-                WebkitMaskImage: "linear-gradient(to right, transparent, black 10%, black 90%, transparent)",
-              }}
-            >
-              {liveTranscript.join(" · ")}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Command bar — top-left, interactive (DEBUG: blue tint) */}
+      {/* Command bar — top-left, glassmorphism */}
       <div
         className="fixed top-0 left-0 z-50 px-2 py-1"
         style={{
           pointerEvents: "auto",
-          background: "rgba(30, 80, 220, 0.15)",
-          border: "1px solid rgba(30, 80, 220, 0.35)",
-          borderRadius: "0 0 8px 0",
+          background: "linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04))",
+          border: "1px solid rgba(255, 255, 255, 0.35)",
+          borderTop: "1px solid rgba(255, 255, 255, 0.5)",
+          borderLeft: "1px solid rgba(255, 255, 255, 0.45)",
+          borderRadius: "0 0 16px 0",
+          boxShadow: "0 4px 30px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.3)",
         }}
         onMouseEnter={() => window.electronAPI.setIgnoreMouse(false)}
         onMouseLeave={() => window.electronAPI.setIgnoreMouse(true)}
@@ -443,18 +412,24 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
             onSettingsToggle={handleSettingsToggle}
           />
         </div>
-        {/* Settings */}
+        {/* Settings — glass panel */}
         {isSettingsOpen && (
-          <div className="mt-2 max-w-sm">
+          <div className="mt-2 max-w-sm glass-panel">
             <ModelSelector onModelChange={handleModelChange} onChatOpen={() => setIsChatOpen(true)} />
           </div>
         )}
-        {/* Chat */}
+        {/* Chat — glass panel */}
         {isChatOpen && (
-          <div className="mt-2 max-w-md liquid-glass chat-container p-4 flex flex-col">
-            <div className="flex-1 overflow-y-auto mb-3 p-3 rounded-lg bg-white/10 backdrop-blur-md max-h-64 min-h-[120px] glass-content border border-white/20 shadow-lg">
+          <div className="mt-2 max-w-md glass-panel p-4 flex flex-col">
+            <div
+              className="flex-1 overflow-y-auto mb-3 p-3 rounded-xl max-h-64 min-h-[120px]"
+              style={{
+                background: "rgba(255, 255, 255, 0.06)",
+                border: "1px solid rgba(255, 255, 255, 0.2)",
+              }}
+            >
               {chatMessages.length === 0 ? (
-                <div className="text-base text-gray-600 text-center mt-8">
+                <div className="text-base text-center mt-8" style={{ color: "rgba(30, 60, 100, 0.4)" }}>
                   Chat with {currentModel.provider === "ollama" ? "local" : "cloud"} {currentModel.model}
                 </div>
               ) : (
@@ -464,12 +439,29 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
                     className={`w-full flex ${msg.role === "user" ? "justify-end" : "justify-start"} mb-3`}
                   >
                     <div
-                      className={`max-w-[80%] px-3 py-1.5 rounded-xl text-sm shadow-md backdrop-blur-sm border ${
-                        msg.role === "user"
-                          ? "bg-gray-700/80 text-gray-100 ml-12 border-gray-600/40"
-                          : "bg-white/85 text-gray-700 mr-12 border-gray-200/50"
+                      className={`max-w-[80%] px-3 py-1.5 text-sm ${
+                        msg.role === "user" ? "ml-12" : "mr-12"
                       }`}
-                      style={{ wordBreak: "break-word", lineHeight: "1.4" }}
+                      style={{
+                        background: msg.role === "user"
+                          ? "linear-gradient(145deg, rgba(59, 130, 246, 0.3), rgba(59, 130, 246, 0.12))"
+                          : "linear-gradient(145deg, rgba(147, 197, 253, 0.25), rgba(147, 197, 253, 0.08))",
+                        color: msg.role === "user"
+                          ? "rgba(10, 40, 90, 0.9)"
+                          : "rgba(10, 40, 90, 0.85)",
+                        border: msg.role === "user"
+                          ? "1px solid rgba(96, 165, 250, 0.35)"
+                          : "1px solid rgba(191, 219, 254, 0.4)",
+                        borderTop: msg.role === "user"
+                          ? "1px solid rgba(147, 197, 253, 0.45)"
+                          : "1px solid rgba(219, 234, 254, 0.5)",
+                        boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 2px 8px rgba(59, 130, 246, 0.08)",
+                        borderRadius: msg.role === "user"
+                          ? "16px 16px 4px 16px"
+                          : "16px 16px 16px 4px",
+                        wordBreak: "break-word",
+                        lineHeight: "1.4",
+                      }}
                     >
                       {msg.text}
                     </div>
@@ -478,9 +470,17 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
               )}
               {chatLoading && (
                 <div className="flex justify-start mb-3">
-                  <div className="bg-white/85 text-gray-600 px-3 py-1.5 rounded-xl text-xs backdrop-blur-sm border border-gray-200/50 shadow-md mr-12">
+                  <div
+                    className="px-3 py-1.5 rounded-xl text-xs mr-12"
+                    style={{
+                      background: "linear-gradient(145deg, rgba(147, 197, 253, 0.25), rgba(147, 197, 253, 0.08))",
+                      color: "rgba(10, 40, 90, 0.7)",
+                      border: "1px solid rgba(191, 219, 254, 0.4)",
+                      boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+                    }}
+                  >
                     <span className="inline-flex items-center">
-                      <span className="animate-pulse text-gray-400">...</span>
+                      <span className="animate-pulse" style={{ color: "rgba(59, 130, 246, 0.5)" }}>...</span>
                       <span className="ml-2">{currentModel.model} is replying</span>
                     </span>
                   </div>
@@ -488,12 +488,17 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
               )}
             </div>
             <form
-              className="flex gap-2 items-center glass-content"
+              className="flex gap-2 items-center"
               onSubmit={e => { e.preventDefault(); handleChatSend(); }}
             >
               <input
                 ref={chatInputRef}
-                className="flex-1 rounded-lg px-3 py-2 bg-white/25 backdrop-blur-md text-gray-800 placeholder-gray-500 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400/60 border border-white/40 shadow-lg"
+                className="flex-1 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-300/40"
+                style={{
+                  background: "rgba(255, 255, 255, 0.1)",
+                  border: "1px solid rgba(255, 255, 255, 0.3)",
+                  color: "rgba(10, 40, 90, 0.85)",
+                }}
                 placeholder="Type your message..."
                 value={chatInput}
                 onChange={e => setChatInput(e.target.value)}
@@ -501,12 +506,18 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
               />
               <button
                 type="submit"
-                className="p-2 rounded-lg bg-gray-600/80 hover:bg-gray-700/80 border border-gray-500/60 flex items-center justify-center backdrop-blur-sm shadow-lg disabled:opacity-50"
+                className="p-2 rounded-lg flex items-center justify-center disabled:opacity-50"
+                style={{
+                  background: "linear-gradient(145deg, rgba(59, 130, 246, 0.25), rgba(59, 130, 246, 0.1))",
+                  border: "1px solid rgba(96, 165, 250, 0.35)",
+                  borderTop: "1px solid rgba(147, 197, 253, 0.45)",
+                  boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+                }}
                 disabled={chatLoading || !chatInput.trim()}
                 tabIndex={-1}
                 aria-label="Send"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="white" className="w-4 h-4">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="rgba(30, 60, 100, 0.6)" className="w-4 h-4">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-7.5-15-7.5v6l10 1.5-10 1.5v6z" />
                 </svg>
               </button>
@@ -515,7 +526,7 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
         )}
       </div>
 
-      {/* Radial Manus Tool Overlay — center-right, independent of command bar */}
+      {/* Radial Manus Tool Overlay */}
       <RadialLayout
         toolResults={toolResults}
         runningTools={runningTools}
