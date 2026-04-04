@@ -208,15 +208,15 @@ export function initializeIpcHandlers(appState: AppState): void {
 
   ipcMain.handle("run-manus-tool", async (_, toolName: string, args: Record<string, string>, screenshotPath?: string) => {
     try {
-      const result = await appState.processingHelper.runManusTool(
+      await appState.processingHelper.runManusTool(
         toolName as any,
         args,
         screenshotPath
       )
-      return result
+      // Result delivered via manus-tool-result event, not return value
     } catch (error: any) {
       console.error(`Error running Manus tool ${toolName}:`, error)
-      throw error
+      // Error delivered via manus-tool-error event, not throw
     }
   })
 

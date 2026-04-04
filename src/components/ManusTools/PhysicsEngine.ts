@@ -155,25 +155,35 @@ export class PhysicsEngine {
     this.simulation = forceSimulation<PhysicsNode, PhysicsLink>()
       .velocityDecay(0.4)
       .alphaDecay(0.01)
-      .alphaTarget(0.02)
+      .alphaTarget(0)
       .force("charge", forceManyBody<PhysicsNode>().strength(-80).distanceMax(500))
       .force("collide", forceCollide<PhysicsNode>().radius(d => Math.max(d.width, d.height) / 2 + 24).strength(1))
-      // No link force — cards don't attract each other
+      .force("link", forceLink<PhysicsNode, PhysicsLink>(this.links).id(d => d.id).distance(200).strength(0.3))
       .force("zoneX", forceX<PhysicsNode>().x(d => getZoneTarget(d.zone, screenW, screenH).x).strength(0.2))
       .force("zoneY", forceY<PhysicsNode>().y(d => getZoneTarget(d.zone, screenW, screenH).y).strength(0.2))
       .on("tick", () => {
         const cx = screenW / 2
         const cy = screenH / 2
+        const CENTER_DEAD_ZONE = 150 // only push when card is within this radius of center
 
         const positions = new Map<string, { x: number; y: number }>()
         for (const node of this.nodes) {
-          // Constant center repulsion — always pushes away from center
-          const dx = (node.x || 0) - cx
-          const dy = (node.y || 0) - cy
-          const dist = Math.sqrt(dx * dx + dy * dy) || 1
-          const centerForce = 3 // constant push strength
-          node.vx = (node.vx || 0) + (dx / dist) * centerForce
-          node.vy = (node.vy || 0) + (dy / dist) * centerForce
+          let dx = (node.x || 0) - cx
+          let dy = (node.y || 0) - cy
+          const dist = Math.sqrt(dx * dx + dy * dy)
+
+          // Only apply center repulsion when card is near center
+          if (dist < CENTER_DEAD_ZONE) {
+            // If card is at exact center, nudge with random offset to escape dead zone
+            if (dist < 1) {
+              dx = (Math.random() - 0.5) * 2
+              dy = (Math.random() - 0.5) * 2
+            }
+            const normDist = dist || 1
+            const centerForce = 3 * (1 - dist / CENTER_DEAD_ZONE) // fade out near boundary
+            node.vx = (node.vx || 0) + (dx / normDist) * centerForce
+            node.vy = (node.vy || 0) + (dy / normDist) * centerForce
+          }
 
           const x = Math.max(16, Math.min(this.screenW - node.width - 16, node.x || 0))
           const y = Math.max(16, Math.min(this.screenH - node.height - 16, node.y || 0))
@@ -188,6 +198,9 @@ export class PhysicsEngine {
   }
 
   public addNode(id: string, width: number, height: number, linkedToId?: string): void {
+    // Guard against duplicate node IDs
+    if (this.nodes.some(n => n.id === id)) return
+
     let zone: string
     if (linkedToId && this.nodeZones.has(linkedToId)) {
       zone = this.nodeZones.get(linkedToId)!
@@ -226,13 +239,24 @@ export class PhysicsEngine {
     this.simulation.alpha(0.1).restart()
   }
 
-  public updateNodeSize(_id: string, _width: number, _height: number): void {
-    // No-op — keep physics node size constant to prevent collision jumps.
-    // Visual size change is handled by CSS transition in the card component.
+  public updateNodeSize(id: string, width: number, height: number): void {
+    const node = this.nodes.find(n => n.id === id)
+    if (!node) return
+    node.width = width
+    node.height = height
+    node.targetWidth = width
+    node.targetHeight = height
+    // Recompute collision radii with updated sizes
+    ;(this.simulation.force("collide") as ReturnType<typeof forceCollide<PhysicsNode>>)
+      ?.radius(d => Math.max(d.width, d.height) / 2 + 24)
+    this.simulation.alpha(0.3).restart()
   }
 
-  public updateLinks(_newLinks: Array<{ source: string; target: string }>): void {
-    // Links disabled — cards repel, don't attract
+  public updateLinks(newLinks: Array<{ source: string; target: string }>): void {
+    this.links = newLinks.map(l => ({ source: l.source, target: l.target }))
+    ;(this.simulation.force("link") as ReturnType<typeof forceLink<PhysicsNode, PhysicsLink>>)
+      ?.links(this.links)
+    this.simulation.alpha(0.3).restart()
   }
 
   public destroy(): void {

@@ -13,5 +13,5 @@
     "moduleResolution": "node",
     "resolveJsonModule": true
   },
-  "include": ["*.ts"]
+  "include": ["*.ts", "../shared/parseManusJSON.ts", "../shared/parseLineFormat.ts", "../shared/normalizeCardData.ts", "../shared/queryClassifier.ts"]
 }

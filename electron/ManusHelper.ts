@@ -1,4 +1,5 @@
 import dotenv from "dotenv"
+import { parseManusResponse } from "../shared/parseManusJSON"
 
 dotenv.config()
 
@@ -266,34 +267,18 @@ export class ManusHelper {
 
   private parseTaskResult(taskId: string, status: ManusTaskStatus): ManusResult {
     const files: Array<{ url: string; name: string; mimeType: string }> = []
-    let finalText = ""
+    let bestText = ""
+    let allTexts: string[] = []
 
     if (status.output) {
       const assistantMessages = status.output.filter(
         m => m.role === "assistant" && m.content && m.content.length > 0
       )
 
-      // Strategy: scan ALL assistant messages for JSON with a "display" field.
-      // Manus sometimes sends the JSON first, then a follow-up prose message.
-      // We want the JSON, not the prose.
-      let jsonText = ""
-      let lastPlainText = ""
-
       for (const msg of assistantMessages) {
         for (const block of msg.content) {
           if ((block.type === "output_text" || block.type === "text") && block.text) {
-            const cleaned = block.text.trim().replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim()
-              // Repair common Manus JSON typos (e.g. "score">6 instead of "score":6)
-              .replace(/"(\w+)">([\d.]+)/g, '"$1":$2')
-            try {
-              const parsed = JSON.parse(cleaned)
-              if (parsed.display) {
-                jsonText = block.text // found structured JSON with display field
-              }
-            } catch {
-              // not JSON — track as plain text fallback
-            }
-            lastPlainText = block.text
+            allTexts.push(block.text)
           }
           if (block.type === "output_file" && block.fileUrl) {
             files.push({
@@ -305,15 +290,26 @@ export class ManusHelper {
         }
       }
 
-      // Prefer JSON with display field, fall back to last plain text
-      finalText = jsonText || lastPlainText
+      // Try each text block through the shared parser — pick the first valid one
+      for (const text of allTexts) {
+        const parsed = parseManusResponse(text)
+        if (parsed.valid) {
+          bestText = text
+          break
+        }
+      }
+
+      // If no valid JSON found, use the last text block as fallback
+      if (!bestText && allTexts.length > 0) {
+        bestText = allTexts[allTexts.length - 1]
+      }
     }
 
     return {
       taskId,
       taskUrl: status.metadata?.task_url || "",
       status: "completed",
-      text: finalText,
+      text: bestText,
       files,
       raw: status,
     }

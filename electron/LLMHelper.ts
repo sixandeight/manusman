@@ -1,4 +1,5 @@
 import fs from "fs"
+import path from "path"
 
 interface KimiResponse {
   choices: Array<{
@@ -51,8 +52,10 @@ Rules:
   }
 
   private cleanJsonResponse(text: string): string {
-    text = text.replace(/^```(?:json)?\n/, '').replace(/\n```$/, '')
+    if (!text) return "{}"
+    text = text.replace(/```(?:json)?\n/g, '').replace(/\n?```/g, '')
     text = text.trim()
+    if (!text) return "{}"
     return text
   }
 
@@ -86,7 +89,12 @@ Rules:
       }
 
       const data: KimiResponse = await response.json()
-      return data.choices[0].message.content
+      const content = data.choices?.[0]?.message?.content
+      if (content == null) {
+        console.warn("[LLMHelper] Kimi returned empty choices:", JSON.stringify(data))
+        return ""
+      }
+      return content
     } catch (error) {
       console.error("[LLMHelper] Error calling Kimi:", error)
       throw error
@@ -282,10 +290,28 @@ Rules:
     }
   }
 
+  private mimeTypeFromPath(filePath: string): string {
+    const ext = path.extname(filePath).toLowerCase()
+    const mimeTypes: Record<string, string> = {
+      ".png": "image/png",
+      ".jpg": "image/jpeg",
+      ".jpeg": "image/jpeg",
+      ".gif": "image/gif",
+      ".webp": "image/webp",
+      ".bmp": "image/bmp",
+      ".svg": "image/svg+xml",
+    }
+    return mimeTypes[ext] || "image/png"
+  }
+
   public async analyzeImageFile(imagePath: string) {
     try {
+      if (!fs.existsSync(imagePath)) {
+        throw new Error(`Image file not found: ${imagePath}`)
+      }
       const imageData = await fs.promises.readFile(imagePath)
-      const imagePart = this.imageToKimiPart(imageData.toString("base64"))
+      const mimeType = this.mimeTypeFromPath(imagePath)
+      const imagePart = this.imageToKimiPart(imageData.toString("base64"), mimeType)
 
       const messages = [
         { role: "system", content: this.systemPrompt },

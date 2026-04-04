@@ -42,50 +42,17 @@ function buildArgs(toolName: string, input: string): Record<string, string> {
 let counter = 0
 function nextId(tool: string) { return `c-${tool}-${++counter}-${Date.now()}` }
 
-// Parse result JSON — extract JSON from anywhere in text
-function parseResultJSON(text: string): any | null {
-  if (!text) return null
+// Shared JSON parser + normalizer — single source of truth for Manus response parsing
+import { parseManusResponse } from "../../../shared/parseManusJSON"
+import { normalizeCardData } from "../../../shared/normalizeCardData"
 
-  // Clean code fences if present
-  const cleaned = text.trim().replace(/^```(?:json)?\s*\n?/, "").replace(/\n?\s*```$/, "").trim()
-
-  // Strategy 1: try parsing the cleaned text directly
-  try {
-    const parsed = JSON.parse(cleaned)
-    if (parsed && typeof parsed === "object") return parsed
-  } catch {}
-
-  // Strategy 2: extract ```json ... ``` block from anywhere in the text
-  const codeBlockMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/)
-  if (codeBlockMatch) {
-    try { return JSON.parse(codeBlockMatch[1].trim()) } catch {}
+function parseResultJSON(text: string, toolName?: string): any | null {
+  const result = parseManusResponse(text, toolName)
+  if (result.errors.length > 0) {
+    console.warn(`[parseManusJSON] ${result.errors.join("; ")}`)
   }
-
-  // Strategy 3: find the first balanced { } block containing "display"
-  const startIdx = text.indexOf('{"display"')
-  if (startIdx === -1) {
-    const altIdx = text.indexOf('"display"')
-    if (altIdx > 0) {
-      // find the { before "display"
-      const braceIdx = text.lastIndexOf('{', altIdx)
-      if (braceIdx >= 0) {
-        // find matching closing brace
-        let depth = 0
-        for (let i = braceIdx; i < text.length; i++) {
-          if (text[i] === '{') depth++
-          else if (text[i] === '}') { depth--; if (depth === 0) { try { return JSON.parse(text.substring(braceIdx, i + 1)) } catch { break } } }
-        }
-      }
-    }
-  } else {
-    let depth = 0
-    for (let i = startIdx; i < text.length; i++) {
-      if (text[i] === '{') depth++
-      else if (text[i] === '}') { depth--; if (depth === 0) { try { return JSON.parse(text.substring(startIdx, i + 1)) } catch { break } } }
-    }
-  }
-
-  return null
+  // Normalize ensures all fields are correct types — no NaN, no null crashes
+  return result.data ? normalizeCardData(result.data) : null
 }
 
 // ── Auto-fade hook ─────────────────────────────────────
@@ -203,18 +170,18 @@ const CardView: React.FC<{
       <div
         className="rounded-xl overflow-hidden"
         style={{
-          background: "rgba(0, 0, 0, 0.65)",
+          background: "rgba(255, 255, 255, 0.95)",
           borderLeft: `3px solid ${
-            card.phase === "complete" ? "#4ade80" :
-            card.phase === "thinking" ? "#facc15" :
-            card.phase === "pending" ? "#888" :
+            card.phase === "complete" ? "#16a34a" :
+            card.phase === "thinking" ? "#ca8a04" :
+            card.phase === "pending" ? "#aaa" :
             color
           }`,
           boxShadow: card.phase === "thinking"
-            ? `0 4px 20px rgba(0,0,0,0.25), 0 0 8px rgba(250, 204, 21, 0.15)`
+            ? `0 4px 20px rgba(0,0,0,0.08), 0 0 8px rgba(202, 138, 4, 0.15)`
             : card.phase === "complete"
-            ? `0 4px 20px rgba(0,0,0,0.25), 0 0 8px rgba(74, 222, 128, 0.15)`
-            : `0 4px 20px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.06)`,
+            ? `0 4px 20px rgba(0,0,0,0.08), 0 0 8px rgba(22, 163, 106, 0.15)`
+            : `0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.08)`,
           width: card.phase === "complete" ? (card.toolName === "prep" ? 520 : 480) : 300,
           transition: "width 400ms ease, border-color 400ms ease, box-shadow 400ms ease",
         }}
@@ -223,10 +190,10 @@ const CardView: React.FC<{
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color }}>{label}</span>
             {card.isAuto && (
-              <span className="text-[9px] font-medium uppercase px-1 py-0.5 rounded bg-white/10 text-white/30">auto</span>
+              <span className="text-[9px] font-medium uppercase px-1 py-0.5 rounded bg-black/5 text-black/40">auto</span>
             )}
           </div>
-          <button onClick={() => onDismiss(card.id)} className="text-white/20 hover:text-white/40 text-xs leading-none">x</button>
+          <button onClick={() => onDismiss(card.id)} className="text-black/25 hover:text-black/50 text-xs leading-none">x</button>
         </div>
 
         {card.phase === "input" && (
@@ -235,22 +202,22 @@ const CardView: React.FC<{
               onChange={e => onQueryChange(card.id, e.target.value)}
               onKeyDown={e => { if (e.key === "Escape") onDismiss(card.id) }}
               placeholder={INPUT_PLACEHOLDERS[card.toolName]}
-              className="w-full px-3 py-2 text-sm text-white bg-white/10 rounded-md border border-white/10 focus:outline-none focus:border-white/20 placeholder-white/30" />
+              className="w-full px-3 py-2 text-sm text-black/80 bg-black/5 rounded-md border border-black/10 focus:outline-none focus:border-black/20 placeholder-black/30" />
           </form>
         )}
 
         {(card.phase === "pending" || card.phase === "thinking") && (
           <div className="px-4 pb-3">
-            {card.query && <div className="text-sm text-white/50 mb-2">{card.query}</div>}
+            {card.query && <div className="text-sm text-black/50 mb-2">{card.query}</div>}
             <div className="flex items-center gap-3">
-              <div className="flex-1 h-1 rounded-full bg-white/10 overflow-hidden">
+              <div className="flex-1 h-1 rounded-full bg-black/10 overflow-hidden">
                 <div className="h-full rounded-full" style={{
                   background: `linear-gradient(90deg, transparent, ${color}88, transparent)`,
                   animation: `shimmer ${card.phase === "thinking" ? "1s" : "2.5s"} ease-in-out infinite`,
                   width: "100%",
                 }} />
               </div>
-              <span className="text-[10px] text-white/30">{phaseLabel}</span>
+              <span className="text-[10px] text-black/30">{phaseLabel}</span>
             </div>
           </div>
         )}
@@ -260,7 +227,7 @@ const CardView: React.FC<{
             {parsed?.display ? (
               <PresetRenderer data={parsed} color={color} />
             ) : (
-              <div className="text-sm text-white/70 leading-relaxed">
+              <div className="text-sm text-black/60 leading-relaxed">
                 {card.result?.text?.substring(0, 500)}
               </div>
             )}
@@ -393,10 +360,7 @@ const RadialLayout: React.FC<Props> = ({
       for (const [cardId, result] of matches) {
         if (!next.has(cardId)) continue
         const card = next.get(cardId)!
-        const parsed = parseResultJSON(result.text)
-        if (!parsed) {
-          console.warn(`[RadialLayout] Failed to parse JSON for ${card.toolName}. Text starts with: "${result.text?.substring(0, 100)}"`)
-        }
+        const parsed = parseResultJSON(result.text, card.toolName)
         next.set(cardId, { ...card, phase: "complete", result, parsedResult: parsed })
         physicsRef.current?.updateNodeSize(cardId, 480, 300)
         changed = true

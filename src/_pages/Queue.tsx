@@ -220,7 +220,7 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
         showToast("Tool Error", `${data.toolName}: ${data.error}`, "error")
       }),
 
-      window.electronAPI.onScreenshotTaken(() => refetch()),
+      // onScreenshotTaken is handled by the dedicated useEffect below (seamless screenshot-to-LLM flow)
       window.electronAPI.onResetView(() => refetch()),
       window.electronAPI.onSolutionError((error: string) => {
         showToast(

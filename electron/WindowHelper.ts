@@ -19,7 +19,7 @@ export class WindowHelper {
   // Initialize with explicit number type and 0 value
   private screenWidth: number = 0
   private screenHeight: number = 0
-  private step: number = 0
+  private step: number = 100
   private currentX: number = 0
   private currentY: number = 0
 
@@ -113,6 +113,23 @@ export class WindowHelper {
 
     this.setupWindowListeners()
     this.isWindowVisible = true
+
+    // Refresh screen dimensions when display config changes (resolution, monitor added/removed)
+    screen.on("display-metrics-changed", () => {
+      const primary = screen.getPrimaryDisplay()
+      this.screenWidth = primary.workAreaSize.width
+      this.screenHeight = primary.workAreaSize.height
+    })
+    screen.on("display-added", () => {
+      const primary = screen.getPrimaryDisplay()
+      this.screenWidth = primary.workAreaSize.width
+      this.screenHeight = primary.workAreaSize.height
+    })
+    screen.on("display-removed", () => {
+      const primary = screen.getPrimaryDisplay()
+      this.screenWidth = primary.workAreaSize.width
+      this.screenHeight = primary.workAreaSize.height
+    })
   }
 
   private setupWindowListeners(): void {
@@ -226,7 +243,7 @@ export class WindowHelper {
 
   // New methods for window movement
   public moveWindowRight(): void {
-    if (!this.mainWindow) return
+    if (!this.mainWindow || this.mainWindow.isDestroyed()) return
 
     const windowWidth = this.windowSize?.width || 0
     const halfWidth = windowWidth / 2
@@ -246,7 +263,7 @@ export class WindowHelper {
   }
 
   public moveWindowLeft(): void {
-    if (!this.mainWindow) return
+    if (!this.mainWindow || this.mainWindow.isDestroyed()) return
 
     const windowWidth = this.windowSize?.width || 0
     const halfWidth = windowWidth / 2
@@ -263,7 +280,7 @@ export class WindowHelper {
   }
 
   public moveWindowDown(): void {
-    if (!this.mainWindow) return
+    if (!this.mainWindow || this.mainWindow.isDestroyed()) return
 
     const windowHeight = this.windowSize?.height || 0
     const halfHeight = windowHeight / 2
@@ -283,7 +300,7 @@ export class WindowHelper {
   }
 
   public moveWindowUp(): void {
-    if (!this.mainWindow) return
+    if (!this.mainWindow || this.mainWindow.isDestroyed()) return
 
     const windowHeight = this.windowSize?.height || 0
     const halfHeight = windowHeight / 2
