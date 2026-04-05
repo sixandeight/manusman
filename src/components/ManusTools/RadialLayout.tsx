@@ -175,7 +175,7 @@ const CardView: React.FC<{
           borderLeft: `3px solid ${color}`,
           borderRadius: "12px",
           boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
-          width: card.phase === "complete" ? (card.toolName === "prep" ? 744 : 672) : 408,
+          width: card.phase === "complete" ? (card.toolName === "prep" ? 620 : 560) : 340,
           transition: "width 400ms ease, border-color 400ms ease, box-shadow 400ms ease",
         }}
       >
@@ -294,7 +294,7 @@ const RadialLayout: React.FC<Props> = ({
       id, toolName: activeToolPrompt.toolName, needsScreenshot: activeToolPrompt.needsScreenshot,
       phase: "input", query: "", result: null, parsedResult: null,
     }))
-    physicsRef.current?.addNode(id, 408, 100)
+    physicsRef.current?.addNode(id, 340, 80)
     // Enable mouse events so the input can receive focus
     window.electronAPI.setIgnoreMouse(false)
     onToolCancel()
@@ -355,7 +355,7 @@ const RadialLayout: React.FC<Props> = ({
         const card = next.get(cardId)!
         const parsed = parseResultJSON(result.text, card.toolName)
         next.set(cardId, { ...card, phase: "complete", result, parsedResult: parsed })
-        physicsRef.current?.updateNodeSize(cardId, 672, 420)
+        physicsRef.current?.updateNodeSize(cardId, 560, 400)
         changed = true
       }
 
