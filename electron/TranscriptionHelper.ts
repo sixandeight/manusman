@@ -6,7 +6,7 @@ import fs from "fs"
 import path from "path"
 import os from "os"
 
-dotenv.config()
+dotenv.config({ path: path.resolve(__dirname, "../../.env") })
 
 export class TranscriptionHelper {
   private groq: Groq | null = null

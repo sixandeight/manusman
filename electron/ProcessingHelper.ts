@@ -7,10 +7,12 @@ import { TranscriptionHelper } from "./TranscriptionHelper"
 import fs from "fs"
 import { pickIntelExample } from "../shared/queryClassifier"
 import dotenv from "dotenv"
+import path from "path"
 
-dotenv.config()
+dotenv.config({ path: path.resolve(__dirname, "../../.env") })
 
 const DEMO_MODE = process.env.DEMO_MODE === "true"
+console.log(`[ProcessingHelper] DEMO_MODE = ${DEMO_MODE}`)
 
 // Line-format display types — much simpler for LLMs to produce correctly
 const DISPLAY_FORMATS = `Available DISPLAY types and their fields:
@@ -91,28 +93,36 @@ slides — meeting prep deck
   SLIDE: (heading) | (bullet) | (bullet) | (bullet)
   SLIDE: (repeat for each slide, 3-5 slides)`
 
-// System prompt — asks for line format, not JSON
-const MANUS_SYSTEM = `SYSTEM: You are the research engine inside Manusman — a transparent overlay on a consultant's screen during live calls.
+// System prompt — strictly enforces line format output
+const MANUS_SYSTEM = `You are a research engine. You MUST respond using ONLY the labeled-line format below. NOTHING ELSE.
 
-The user pressed a keybind. You get: a QUERY (what they typed), optionally a TRANSCRIPT (last 30s of their mic), and optionally a SCREENSHOT. If transcript conflicts with query, trust the transcript — it's what's actually being discussed.
-
-You return ONE structured response using our labeled-line format (shown below). NOT JSON. Each line is KEY: value. Repeated keys become lists. Pipe | separates columns. No markdown, no fences, no prose — just the labeled lines.
-
-The response renders as a card the consultant glances at for 3-5 seconds. Every field must earn its place.
-
-Rules: Numbers > adjectives. New info > background. Skip what a senior consultant already knows. No hallucinated entities. Only answer about what was asked.
-
-Pick the best DISPLAY type:
+RULES — OBEY ALL OF THESE:
+1. First line of your response MUST be "DISPLAY: <type>"
+2. Every line after that MUST be "KEY: value"
+3. NO prose. NO explanations. NO "here are the results". NO markdown. NO JSON.
+4. If you write ANYTHING other than KEY: value lines, the system crashes.
+5. Repeated keys become lists. Pipe | separates columns.
+6. Pick the DISPLAY type that best fits the query.
 
 ${DISPLAY_FORMATS}
 
-MODE: Research using the web. If connectors unavailable, skip silently. No apologies.`
+CONTEXT: This renders as a card on a consultant's overlay during a live call. They glance at it for 3 seconds. Numbers > adjectives. New info > background. No hallucinated entities.
+
+Research using the web. If connectors unavailable, skip silently.
+
+REMEMBER: Your ENTIRE response must be KEY: value lines starting with DISPLAY:. Nothing else.`
 
 // ── Demo mode ──────────────────────────────────────────────
 // Lean system prompt — no agency framing, no research instructions.
 // Just: "here's the data, format it as a card."
 
-const DEMO_SYSTEM = `Format a response using labeled lines. NOT JSON. Each line is KEY: value. Repeated keys become lists. Pipe | separates columns. No markdown, no fences, no prose.
+const DEMO_SYSTEM = `You MUST respond using ONLY labeled lines. NOTHING ELSE.
+
+RULES:
+1. First line MUST be "DISPLAY: <type>"
+2. Every line MUST be "KEY: value"
+3. NO prose. NO explanations. NO markdown. NO JSON. If you write anything else, the system crashes.
+4. Repeated keys become lists. Pipe | separates columns.
 
 ${DISPLAY_FORMATS}
 
@@ -396,7 +406,7 @@ const TOOL_PROMPTS: Record<string, (args: Record<string, string>, transcript?: s
 
   prep: (args, transcript) => {
     if (DEMO_MODE) {
-      return `${DEMO_SYSTEM}\n\n${DEMO_CONTEXT}\n\nExample:\n${pick(EXAMPLES.prep)}\n\nInput: ${args.context || "Prep for upcoming Meridian meeting"}\nOutput:\nDISPLAY:`
+      return `${DEMO_SYSTEM}\n\n${DEMO_CONTEXT}\n\nExample:\n${pick(EXAMPLES.prep)}\n\nInput: ${args.context || "Prep for upcoming Rex Corp meeting"}\nOutput:\nDISPLAY:`
     }
     const ctx = transcript ? `\nTRANSCRIPT (last 30s of user's mic): "${transcript}"\n` : ""
     return `${MANUS_SYSTEM}\n\nYou are a meeting prep analyst. Your client is about to enter a call. Look at the screenshot — it might show a calendar invite, email, LinkedIn profile, or website. Generate a series of prep slides they can flick through during the call. Return 3-5 slides covering: overview, key people, talking points, and risks/watchouts.\n\nExample:\n${pick(EXAMPLES.prep)}\n${ctx}\nInput: ${args.context || "See attached screenshot"}\nOutput:\nDISPLAY:`

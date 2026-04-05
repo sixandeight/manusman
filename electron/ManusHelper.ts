@@ -1,7 +1,8 @@
 import dotenv from "dotenv"
+import path from "path"
 import { parseManusResponse } from "../shared/parseManusJSON"
 
-dotenv.config()
+dotenv.config({ path: path.resolve(__dirname, "../../.env") })
 
 interface ManusTaskResponse {
   taskId: string

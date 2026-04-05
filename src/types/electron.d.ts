@@ -1,4 +1,4 @@
-export interface ElectronAPI {
+interface ElectronAPI {
   updateContentDimensions: (dimensions: {
     width: number
     height: number
@@ -24,12 +24,33 @@ export interface ElectronAPI {
   moveWindowDown: () => Promise<void>
   analyzeAudioFromBase64: (data: string, mimeType: string) => Promise<{ text: string; timestamp: number }>
   analyzeAudioFile: (path: string) => Promise<{ text: string; timestamp: number }>
+  analyzeImageFile: (path: string) => Promise<void>
   quitApp: () => Promise<void>
+
+  // LLM Model Management
+  getCurrentLlmConfig: () => Promise<{ provider: "ollama" | "gemini"; model: string; isOllama: boolean }>
+  getAvailableOllamaModels: () => Promise<string[]>
+  switchToOllama: (model?: string, url?: string) => Promise<{ success: boolean; error?: string }>
+  switchToGemini: (apiKey?: string) => Promise<{ success: boolean; error?: string }>
+  testLlmConnection: () => Promise<{ success: boolean; error?: string }>
+
+  // Click-through
+  setIgnoreMouse: (ignore: boolean) => Promise<void>
+
+  // Manus Tools
+  runManusTool: (toolName: string, args: Record<string, string>, screenshotPath?: string) => Promise<any>
+  getLastScreenshotPath: () => Promise<string | null>
+  transcribeAudioBuffer: (audioData: ArrayBuffer, mimeType: string) => Promise<string>
+  onManusToolPrompt: (callback: (data: { toolName: string; needsScreenshot: boolean }) => void) => () => void
+  onManusToolStarted: (callback: (data: { toolName: string; args: Record<string, string> }) => void) => () => void
+  onManusToolStatus: (callback: (data: { toolName: string; status: string }) => void) => () => void
+  onManusToolResult: (callback: (data: any) => void) => () => void
+  onManusToolPartial: (callback: (data: any) => void) => () => void
+  onManusToolError: (callback: (data: { toolName: string; error: string }) => void) => () => void
+
   invoke: (channel: string, ...args: any[]) => Promise<any>
 }
 
-declare global {
-  interface Window {
-    electronAPI: ElectronAPI
-  }
-} 
+interface Window {
+  electronAPI: ElectronAPI
+}

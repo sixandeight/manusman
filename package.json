@@ -1,7 +1,7 @@
 {
   "name": "manusman",
   "version": "1.0.0",
-  "main": "./dist-electron/main.js",
+  "main": "./dist-electron/electron/main.js",
   "scripts": {
     "clean": "rimraf dist dist-electron",
     "dev": "vite",

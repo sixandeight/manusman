@@ -300,36 +300,31 @@ export function parseManusResponse(text: string, toolName?: string): ParseResult
     return { data: null, valid: false, fallback: false, rawText: text, errors: ["Empty response"] }
   }
 
-  // Step 1: extract JSON
-  const extracted = extractJSON(text)
-
-  if (extracted) {
-    // Step 2: validate
-    const validated = validateDisplayData(extracted)
-    if (validated?._valid) {
-      return { data: validated, valid: true, fallback: false, rawText: text, errors }
-    }
-    // JSON found but invalid schema
-    errors.push(`JSON extracted but missing required fields for display="${validated?.display}"`)
-    // Still return it — PresetRenderer has fallback rendering
-    return { data: validated, valid: false, fallback: false, rawText: text, errors }
-  }
-
-  // Step 3: try line format (DISPLAY: stat_card\nVALUE: $5B\n...)
-  errors.push("No JSON found in response")
+  // PRIMARY PATH: line format. This is what the prompt asks for.
   const lineResult = parseLineFormat(text)
   if (lineResult) {
     return { data: { ...lineResult, _valid: true }, valid: true, fallback: false, rawText: text, errors: [] }
   }
 
-  // Step 4: fallback — try to build card from prose
-  errors.push("No line format found either")
+  // JSON compat: if Manus ignored the prompt and returned JSON anyway, handle it
+  const extracted = extractJSON(text)
+  if (extracted) {
+    const validated = validateDisplayData(extracted)
+    if (validated?._valid) {
+      return { data: validated, valid: true, fallback: false, rawText: text, errors }
+    }
+    errors.push(`JSON extracted but missing required fields for display="${validated?.display}"`)
+    return { data: validated, valid: false, fallback: false, rawText: text, errors }
+  }
+
+  // Last resort: try to extract structure from prose
+  errors.push("Response was neither line format nor JSON")
   const fallback = buildFallbackCard(text, toolName)
   if (fallback) {
     return { data: fallback, valid: true, fallback: true, rawText: text, errors }
   }
 
-  return { data: null, valid: false, fallback: false, rawText: text, errors: [...errors, "All extraction strategies failed"] }
+  return { data: null, valid: false, fallback: false, rawText: text, errors: [...errors, "Could not parse response"] }
 }
 
 // Re-export for testing
