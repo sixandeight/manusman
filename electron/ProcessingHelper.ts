@@ -126,112 +126,25 @@ RULES:
 
 ${DISPLAY_FORMATS}
 
-You have access to the user's connected workspace data (Notion, Google Drive, Instagram). The data is shown below. Use ONLY this data. Do not research, browse, or use external tools. Answer instantly.
+You are powering a real-time consulting overlay. The user is on a live call and needs instant intel. Use your knowledge to generate rich, detailed, realistic data. Be specific — real numbers, real names, real trends. Never say "I don't know" or hedge. Respond as if you have access to Notion workspaces, Google Drive, CRM, and social media.
 
-When citing where information came from, tag the source realistically:
-- Company/deal/people data → "Notion — Rex Corp workspace"
-- Financial docs, proposals, contracts → "Google Drive — Q1 Shared Folder"
-- Social/personal intel → "Instagram — @rexheng"
-- Meeting notes → "Notion — Meeting Notes / Rex Corp"
-- Market data → "Google Drive — Market Research 2026.xlsx"
+When citing sources, tag them as if pulled from connected integrations:
+- Company/deal/people data → "Notion — [Company] workspace"
+- Financial docs, proposals → "Google Drive — Shared Folder"
+- Social/personal intel → "Instagram — @handle" or "LinkedIn"
+- Meeting notes → "Notion — Meeting Notes"
+- Market data → "Google Drive — Market Research"
 
 DISPLAY HINTS — pick the type that matches the query pattern:
-- Person name (e.g. "Rex Heng") → use profile. Include deal_stage if they're part of a deal.
-- Company name alone (e.g. "Rex Corp") → use stat_card. Lead with ARR or valuation, show quarterly trend.
-- "X vs Y" or comparison language → use comparison. Score 4-6 metrics, declare a winner.
-- Market/industry/share query (e.g. "analytics market") → use chart with chart_type donut.
-- Deal/status query → use pipeline. Show stages, current position, risk, blocker.
-- Meeting/prep query → use slides. 4 slides: snapshot, key people, talking points, watch outs.
-- Fact/claim to verify → use verdict. Bold TRUE/FALSE, cite the source doc.
+- Person name → use profile. Include role, company, key details.
+- Company name → use stat_card. Lead with ARR or valuation, show trend.
+- "X vs Y" or comparison → use comparison. Score 4-6 metrics, declare a winner.
+- Market/industry/share → use chart with chart_type donut.
+- Deal/status → use pipeline. Show stages, current position, risk, blocker.
+- Meeting/prep → use slides. 4 slides: snapshot, key people, talking points, watch outs.
+- Fact/claim to verify → use verdict. Bold TRUE/FALSE, cite evidence.
 - Action items / "what should I" → use checklist. Priority-tagged context + checkbox items.
 These are hints, not rules — but follow them unless the data clearly fits a different type.`
-
-const DEMO_CONTEXT = `
-=== CONNECTED: Notion — CCN London / Rex Corp ===
-
-COMPANY: Rex Corp
-- Enterprise data analytics platform (SaaS)
-- HQ: San Francisco | Offices: London, Singapore, Sydney
-- Founded: 2019 by Nathan Karri (CTO) and Kiki Zhang (CEO)
-- ARR: $48M, 42% YoY growth
-- Headcount: 320 (up from 210 last year)
-- Series C: $85M raised (Sequoia led, Feb 2025)
-- Valuation: $620M post-money
-- Key product: "Rex Lens" — real-time analytics for enterprise ops
-- Competitors: Palantir ($1.8M counter-bid), Databricks, ThoughtSpot
-- NPS: 72 (industry avg: 45)
-- Tech stack: Snowflake, AWS, dbt, Kubernetes
-
-KEY PEOPLE:
-- Kiki Zhang, CEO & Co-founder — ex-McKinsey partner (7 yrs), Stanford MBA 2016. Aggressive expansion targets. Wants 3x ARR by 2027. Also handles finance — skeptical of per-seat pricing, wants usage-based.
-- Nathan Karri, CTO & Co-founder — ex-Google (led BigQuery team 2015-2019). Building "Rex AI" predictive module. Wants a joint case study with us.
-- Rex Heng, VP of Strategy — ex-BCG (5 yrs, London office), joined Rex Corp Jan 2024. Leading consulting vertical expansion. YOUR PRIMARY CONTACT. Championing the deal internally.
-
-=== CONNECTED: Notion — Meeting Notes / Rex Corp ===
-
-Mar 20, 2026: Rex demo'd Lens to EMEA leads. Positive reception. Asked about SSO integration timeline.
-Mar 28, 2026: Kiki pushed back on per-seat pricing. Wants usage-based model. Rex backed our proposal internally.
-Apr 1, 2026: Technical deep-dive with Nathan Karri. Confirmed API compatibility with our stack. He asked about joint case study. Rex mentioned Q2 board meeting — wants deal closed before then.
-
-=== CONNECTED: Google Drive — Q1 Shared Folder ===
-
-RexCorp_Phase1_Results.pdf:
-- Phase 1 pilot: $180K, 3-month data migration audit — COMPLETED ✓
-- Migrated 2.3TB across 14 data sources
-- Reduced query latency by 62%
-- Client satisfaction: 4.7/5
-
-RexCorp_Phase2_Proposal.docx:
-- Phase 2: $2.4M annual contract — full Lens deployment across EMEA ops
-- Scope: 12 business units, 850 users, 3 data centers
-- Timeline: 6-month rollout, go-live target Sept 2026
-- Pipeline stage: Proposal → awaiting CEO sign-off
-- Decision deadline: April 18, 2026
-
-RexCorp_Competitive_Intel.xlsx:
-- Palantir submitted $1.8M counter-proposal (stripped SSO, no APAC support, 18-month lock-in)
-- Databricks quoted $2.1M but no professional services
-- ThoughtSpot withdrew after Phase 1
-
-=== CONNECTED: Google Drive — Market Research 2026.xlsx ===
-
-Enterprise Analytics Market:
-- TAM: $95B (2026), projected $142B by 2028
-- Rex Corp market share: 1.2% (up from 0.6% in 2024)
-- Palantir market share: 4.8%
-- Growth segment: mid-market SaaS (Rex Corp's sweet spot)
-
-Rex Corp Financials (public + estimates):
-- Q1 2025: $11.2M rev (+38% YoY)
-- Q2 2025: $12.8M rev (+44% YoY)
-- Q3 2025: $13.1M rev (+40% YoY)
-- Q4 2025: $14.5M rev (+46% YoY)
-- Gross margin: 78%
-- Burn: $3.2M/month (down from $4.1M)
-- Runway: 18 months
-
-=== CONNECTED: Instagram — @rexheng ===
-
-Bio: "VP Strategy @RexCorp | ex-BCG | Data nerd | London → SF"
-Recent: Posted about Rex Corp's Snowflake partnership (Feb 2026). Shared stage at SaaStr Annual. Follows our company page.
-Style: Professional but approachable. Posts about data strategy, consulting life, occasional travel.
-
-=== CONNECTED: Instagram — @kiki.zhang.ceo ===
-
-Bio: "CEO @RexCorp | Building the future of enterprise analytics"
-Recent: Announced Singapore office opening (Jan 2026). Posted Series C celebration. Active thought leader — 12K followers.
-
-=== DEAL STATUS ===
-
-Risk: MEDIUM
-- ✅ Champion (Rex) is strong
-- ✅ Technical validation passed
-- ⚠️ Kiki (CEO) wants ROI model before signing
-- ⚠️ Palantir undercutting on price by $600K
-- ⚠️ Board meeting Q2 — political pressure to close
-- ✅ Phase 1 results were strong (4.7/5 satisfaction)
-- Timeline: 14 days until decision deadline
-`
 
 // ── Example pools — each call randomly picks one for format variety
 function pick<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.length)] }
@@ -390,7 +303,7 @@ SOURCE: Financial Times`,
 const TOOL_PROMPTS: Record<string, (args: Record<string, string>, transcript?: string) => string> = {
   intel: (args, transcript) => {
     if (DEMO_MODE) {
-      return `${DEMO_SYSTEM}\n\n${DEMO_CONTEXT}\n\nExample:\n${pickIntelExample(args.query, EXAMPLES.intel)}\n\nInput: ${args.query}\nOutput:\nDISPLAY:`
+      return `${DEMO_SYSTEM}\n\nExample:\n${pickIntelExample(args.query, EXAMPLES.intel)}\n\nInput: ${args.query}\nOutput:\nDISPLAY:`
     }
     const ctx = transcript ? `\nTRANSCRIPT (last 30s of user's mic): "${transcript}"\n` : ""
     return `${MANUS_SYSTEM}\n\nYou are a consulting intelligence analyst. Your client is on a live call and needs instant intel. Analyze the input — it could be a company name, a person, a comparison ("X vs Y"), meeting prep ("prep for X call"), a market question, or a specific stat. Pick the DISPLAY type that best fits what you find. Make it glanceable in 5 seconds.\n\nExample:\n${pickIntelExample(args.query, EXAMPLES.intel)}\n${ctx}\nInput: ${args.query}\nOutput:\nDISPLAY:`
@@ -398,7 +311,7 @@ const TOOL_PROMPTS: Record<string, (args: Record<string, string>, transcript?: s
 
   deal_status: (args, transcript) => {
     if (DEMO_MODE) {
-      return `${DEMO_SYSTEM}\n\n${DEMO_CONTEXT}\n\nExample:\n${pick(EXAMPLES.deal_status)}\n\nInput: Deal status for ${args.client_name}\nOutput:\nDISPLAY:`
+      return `${DEMO_SYSTEM}\n\nExample:\n${pick(EXAMPLES.deal_status)}\n\nInput: Deal status for ${args.client_name}\nOutput:\nDISPLAY:`
     }
     const ctx = transcript ? `\nTRANSCRIPT (last 30s of user's mic): "${transcript}"\n` : ""
     return `${MANUS_SYSTEM}\n\nYou are a deal desk analyst. Your client needs to know where a deal stands — pipeline stage, value, risk, blockers, and next steps. If you don't have real CRM data, construct the most plausible status based on public information.\n\nExample:\n${pick(EXAMPLES.deal_status)}\n${ctx}\nInput: Deal status for ${args.client_name}\nOutput:\nDISPLAY:`
@@ -406,7 +319,7 @@ const TOOL_PROMPTS: Record<string, (args: Record<string, string>, transcript?: s
 
   prep: (args, transcript) => {
     if (DEMO_MODE) {
-      return `${DEMO_SYSTEM}\n\n${DEMO_CONTEXT}\n\nExample:\n${pick(EXAMPLES.prep)}\n\nInput: ${args.context || "Prep for upcoming Rex Corp meeting"}\nOutput:\nDISPLAY:`
+      return `${DEMO_SYSTEM}\n\nExample:\n${pick(EXAMPLES.prep)}\n\nInput: ${args.context || "See attached screenshot"}\nOutput:\nDISPLAY:`
     }
     const ctx = transcript ? `\nTRANSCRIPT (last 30s of user's mic): "${transcript}"\n` : ""
     return `${MANUS_SYSTEM}\n\nYou are a meeting prep analyst. Your client is about to enter a call. Look at the screenshot — it might show a calendar invite, email, LinkedIn profile, or website. Generate a series of prep slides they can flick through during the call. Return 3-5 slides covering: overview, key people, talking points, and risks/watchouts.\n\nExample:\n${pick(EXAMPLES.prep)}\n${ctx}\nInput: ${args.context || "See attached screenshot"}\nOutput:\nDISPLAY:`
@@ -414,7 +327,7 @@ const TOOL_PROMPTS: Record<string, (args: Record<string, string>, transcript?: s
 
   live_fact_check: (args, transcript) => {
     if (DEMO_MODE) {
-      return `${DEMO_SYSTEM}\n\n${DEMO_CONTEXT}\n\nExample:\n${pick(EXAMPLES.live_fact_check)}\n\nInput: ${args.claim}\nOutput:\nDISPLAY:`
+      return `${DEMO_SYSTEM}\n\nExample:\n${pick(EXAMPLES.live_fact_check)}\n\nInput: ${args.claim}\nOutput:\nDISPLAY:`
     }
     const ctx = transcript ? `\nTRANSCRIPT (last 30s of user's mic): "${transcript}"\n` : ""
     return `${MANUS_SYSTEM}\n\nYou are a real-time fact-checker. Someone just made a claim during a live call — verify it immediately. Clear verdict, evidence, confidence. Your client needs to know in 3 seconds.\n\nExample:\n${pick(EXAMPLES.live_fact_check)}\n${ctx}\nInput: ${args.claim}\nOutput:\nDISPLAY:`
