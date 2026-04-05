@@ -25,7 +25,7 @@ const StatPreset: React.FC<{ d: any; color: string }> = ({ d, color: _color }) =
   const trend = d.trend as number[] | undefined
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="text-5xl font-black tracking-tight" style={{ color: sentColor }}>{d.value}</div>
       <div className="text-base text-white/40">{d.label}</div>
       {trend && trend.length > 1 && (
@@ -55,7 +55,7 @@ const StatPreset: React.FC<{ d: any; color: string }> = ({ d, color: _color }) =
 // ── Comparison ──────────────────────────────────────────
 const ComparisonPreset: React.FC<{ d: any }> = ({ d }) => {
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex justify-between text-base font-bold uppercase tracking-wider">
         <span className="text-green-600">{d.us_name}</span>
         <span className="text-red-500">{d.them_name}</span>
@@ -97,7 +97,7 @@ const ProfilePreset: React.FC<{ d: any }> = ({ d }) => {
   const stageIdx = d.deal_stage ? stages.indexOf(d.deal_stage.toLowerCase()) : -1
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex items-center gap-4">
         <div className="w-14 h-14 rounded-lg flex items-center justify-center text-2xl font-black shrink-0"
           style={{ background: `${sentColor}20`, color: sentColor }}>
@@ -141,7 +141,7 @@ const VerdictPreset: React.FC<{ d: any }> = ({ d }) => {
   const c = colors[d.verdict] || "#666"
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="py-5 rounded-lg text-center" style={{ background: `${c}15`, border: `1px solid ${c}33` }}>
         <div className="text-4xl font-black tracking-widest" style={{ color: c }}>{labels[d.verdict] || d.verdict}</div>
         {d.confidence && <div className="text-sm mt-1.5" style={{ color: `${c}88` }}>{d.confidence} confidence</div>}
@@ -158,7 +158,7 @@ const ChecklistPreset: React.FC<{ d: any }> = ({ d }) => {
   const priorityColors: Record<string, string> = { high: "#f87171", medium: "#facc15", low: "#4ade80" }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div>
         <div className="text-lg font-bold text-white/90">{d.title}</div>
         {d.subtitle && <div className="text-sm text-white/30 mt-1">{d.subtitle}</div>}
@@ -197,7 +197,7 @@ const PipelinePreset: React.FC<{ d: any }> = ({ d }) => {
   const current = d.current_stage || 0
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex justify-between items-center">
         <span className="text-xl font-bold text-white/90">{d.client}</span>
         {d.deal_value && <span className="text-lg font-mono text-white/50">{d.deal_value}</span>}
@@ -262,7 +262,7 @@ const ChartPreset: React.FC<{ d: any; color: string }> = ({ d, color }) => {
     })
 
     return (
-      <div className="space-y-4">
+      <div className="space-y-5">
         <div className="text-base font-medium text-white/40">{d.title}</div>
         <div className="flex items-center gap-6">
           <div className="w-28 h-28 rounded-full shrink-0" style={{

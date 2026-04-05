@@ -179,7 +179,7 @@ const CardView: React.FC<{
           transition: "width 400ms ease, border-color 400ms ease, box-shadow 400ms ease",
         }}
       >
-        <div className="flex items-center justify-between px-5 h-10 cursor-grab">
+        <div className="flex items-center justify-between px-5 h-12 cursor-grab">
           <div className="flex items-center gap-2">
             <span className="system-badge">{label}</span>
             {card.isAuto && (
@@ -216,7 +216,7 @@ const CardView: React.FC<{
         )}
 
         {card.phase === "complete" && (
-          <div className="px-5 pb-5 pt-2">
+          <div className="px-5 pb-6 pt-3">
             {parsed?.display ? (
               <PresetRenderer data={parsed} color={color} />
             ) : (
