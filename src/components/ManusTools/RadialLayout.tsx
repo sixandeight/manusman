@@ -170,7 +170,9 @@ const CardView: React.FC<{
       <div
         className="rounded-xl overflow-hidden"
         style={{
-          background: "rgba(255, 255, 255, 0.95)",
+          background: "rgba(255, 255, 255, 0.15)",
+          backdropFilter: "blur(16px) saturate(180%) brightness(110%)",
+          WebkitBackdropFilter: "blur(16px) saturate(180%) brightness(110%)",
           borderLeft: `3px solid ${
             card.phase === "complete" ? "#16a34a" :
             card.phase === "thinking" ? "#ca8a04" :

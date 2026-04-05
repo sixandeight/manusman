@@ -25,6 +25,8 @@ html, body, #root {
 /* Glass Panel — primary container style */
 .glass-panel {
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.06));
+  backdrop-filter: blur(16px) saturate(180%) brightness(110%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%) brightness(110%);
   border: 1px solid rgba(255, 255, 255, 0.45);
   border-top: 1px solid rgba(255, 255, 255, 0.6);
   border-left: 1px solid rgba(255, 255, 255, 0.55);
