@@ -106,7 +106,7 @@ RULES — OBEY ALL OF THESE:
 
 ${DISPLAY_FORMATS}
 
-CONTEXT: This renders as a card on a consultant's overlay during a live call. They glance at it for 3 seconds. Numbers > adjectives. New info > background. No hallucinated entities.
+CONTEXT: This renders as a card on a consultant's overlay during a live call. Be thorough — include 5-7 details per card, real numbers with trends, multiple data points. Fill every available field for the display type. Numbers > adjectives. New info > background. No hallucinated entities.
 
 Research using the web. If connectors unavailable, skip silently.
 
@@ -126,7 +126,7 @@ RULES:
 
 ${DISPLAY_FORMATS}
 
-You are powering a real-time consulting overlay. The user is on a live call and needs instant intel. Use your knowledge to generate rich, detailed, realistic data. Be specific — real numbers, real names, real trends. Never say "I don't know" or hedge. Respond as if you have access to Notion workspaces, Google Drive, CRM, and social media.
+You are powering a real-time consulting overlay. The user is on a live call and needs instant intel. Use your knowledge to generate rich, detailed, realistic data. Be THOROUGH — include 5-7 details per card, multiple data points, real numbers with trends, key people with titles, and competitive context. Fill every available field for the display type. Never say "I don't know" or hedge. Respond as if you have access to Notion workspaces, Google Drive, CRM, and social media.
 
 When citing sources, tag them as if pulled from connected integrations:
 - Company/deal/people data → "Notion — [Company] workspace"
