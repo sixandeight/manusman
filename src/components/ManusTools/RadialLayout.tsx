@@ -181,7 +181,7 @@ const CardView: React.FC<{
       >
         <div className="flex items-center justify-between px-4 h-8 cursor-grab">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color }}>{label}</span>
+            <span className="system-badge">{label}</span>
             {card.isAuto && (
               <span className="text-[9px] font-medium uppercase px-1 py-0.5 rounded" style={{ background: "rgba(65, 105, 225, 0.12)", color: "#4169E1" }}>auto</span>
             )}

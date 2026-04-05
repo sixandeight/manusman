@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react"
-import { IoLogOutOutline } from "react-icons/io5"
+import { Search, TrendingUp, Presentation, ShieldCheck, MessageCircle, Settings, Keyboard, LogOut } from "lucide-react"
 
 interface QueueCommandsProps {
   onTooltipVisibilityChange: (visible: boolean, height: number) => void
@@ -26,59 +26,81 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
   onSettingsToggle
 }) => {
   const [showKeybinds, setShowKeybinds] = useState(false)
+  const [flashKey, setFlashKey] = useState<string | null>(null)
   const keybindRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     onTooltipVisibilityChange(showKeybinds, showKeybinds && keybindRef.current ? keybindRef.current.offsetHeight + 10 : 0)
   }, [showKeybinds])
 
-  const btnClass = "px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
-  const btnDefault = `${btnClass} bg-white/10 hover:bg-white/20 text-white/80`
-  const btnAccent = `${btnClass} bg-blue-500/30 hover:bg-blue-500/50 text-blue-200 border border-blue-400/30`
+  const flash = (key: string) => {
+    setFlashKey(key)
+    setTimeout(() => setFlashKey(null), 1500)
+  }
+
+  const pillBase = "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-colors cursor-pointer"
+  const pillStyle = (key: string) => flashKey === key
+    ? { background: "#4169E1", color: "#ffffff" }
+    : { background: "rgba(15, 29, 50, 0.9)", color: "rgba(255, 255, 255, 0.55)" }
 
   return (
     <div className="w-fit">
       {/* Main bar */}
-      <div className="flex items-center gap-2 py-2 px-3 rounded-lg" style={{ background: "rgba(20, 20, 30, 0.85)", border: "1px solid rgba(255,255,255,0.15)" }}>
-
+      <div
+        className="flex items-center gap-1.5 py-2 px-3"
+        style={{ background: "rgba(12, 23, 41, 0.85)", border: "1px solid rgba(255, 255, 255, 0.07)", borderRadius: "12px" }}
+      >
         {/* Tools */}
-        <button className={btnAccent} onClick={() => window.electronAPI.invoke("trigger-manus-tool", "intel")}>
-          1 Intel
+        <button className={pillBase} style={pillStyle("intel")} onClick={() => { flash("intel"); window.electronAPI.invoke("trigger-manus-tool", "intel") }}>
+          <Search className="w-3.5 h-3.5" />
+          <span className="font-mono font-bold">1</span>
+          <span>Intel</span>
         </button>
-        <button className={btnAccent} onClick={() => window.electronAPI.invoke("trigger-manus-tool", "deal_status")}>
-          2 Deal
-        </button>
-
-        <div className="h-5 w-px bg-white/20" />
-
-        <button className={btnDefault} onClick={() => window.electronAPI.invoke("trigger-manus-tool", "prep")}>
-          3 Prep
-        </button>
-        <button className={btnDefault} onClick={() => window.electronAPI.invoke("trigger-manus-tool", "live_fact_check")}>
-          4 Fact
+        <button className={pillBase} style={pillStyle("deal")} onClick={() => { flash("deal"); window.electronAPI.invoke("trigger-manus-tool", "deal_status") }}>
+          <TrendingUp className="w-3.5 h-3.5" />
+          <span className="font-mono font-bold">2</span>
+          <span>Deal</span>
         </button>
 
-        <div className="h-5 w-px bg-white/20" />
+        <div className="w-px h-5" style={{ background: "rgba(255, 255, 255, 0.07)" }} />
+
+        <button className={pillBase} style={pillStyle("prep")} onClick={() => { flash("prep"); window.electronAPI.invoke("trigger-manus-tool", "prep") }}>
+          <Presentation className="w-3.5 h-3.5" />
+          <span className="font-mono font-bold">3</span>
+          <span>Prep</span>
+        </button>
+        <button className={pillBase} style={pillStyle("fact")} onClick={() => { flash("fact"); window.electronAPI.invoke("trigger-manus-tool", "live_fact_check") }}>
+          <ShieldCheck className="w-3.5 h-3.5" />
+          <span className="font-mono font-bold">4</span>
+          <span>Fact</span>
+        </button>
+
+        <div className="w-px h-5" style={{ background: "rgba(255, 255, 255, 0.07)" }} />
 
         {/* Utility buttons */}
-        <button className={btnDefault} onClick={onChatToggle}>
-          Chat
+        <button className={pillBase} style={pillStyle("chat")} onClick={() => { flash("chat"); onChatToggle() }}>
+          <MessageCircle className="w-3.5 h-3.5" />
+          <span>Chat</span>
         </button>
-        <button className={btnDefault} onClick={onSettingsToggle}>
-          Models
+        <button className={pillBase} style={pillStyle("models")} onClick={() => { flash("models"); onSettingsToggle() }}>
+          <Settings className="w-3.5 h-3.5" />
+          <span>Models</span>
         </button>
         <button
-          className={`${btnDefault} ${showKeybinds ? "bg-white/20" : ""}`}
+          className={`${pillBase} ${showKeybinds ? "" : ""}`}
+          style={showKeybinds ? { background: "#4169E1", color: "#ffffff" } : pillStyle("keys")}
           onClick={() => setShowKeybinds(!showKeybinds)}
         >
-          Keys
+          <Keyboard className="w-3.5 h-3.5" />
+          <span>Keys</span>
         </button>
         <button
-          className="px-2 py-1.5 rounded-md text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+          className={pillBase}
+          style={{ background: "rgba(239, 68, 68, 0.15)", color: "rgba(239, 68, 68, 0.8)" }}
           title="Quit"
           onClick={() => window.electronAPI.quitApp()}
         >
-          <IoLogOutOutline className="w-4 h-4" />
+          <LogOut className="w-3.5 h-3.5" />
         </button>
       </div>
 
@@ -86,18 +108,23 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
       {showKeybinds && (
         <div
           ref={keybindRef}
-          className="mt-2 p-3 rounded-lg max-w-md"
-          style={{ background: "rgba(20, 20, 30, 0.9)", border: "1px solid rgba(255,255,255,0.15)" }}
+          className="mt-2 p-3 max-w-md"
+          style={{ background: "rgba(12, 23, 41, 0.85)", border: "1px solid rgba(255, 255, 255, 0.07)", borderRadius: "12px" }}
         >
-          <div className="text-sm font-medium text-white/70 mb-2">Keybinds</div>
+          <div className="text-sm font-medium mb-2" style={{ color: "rgba(255, 255, 255, 0.55)" }}>Keybinds</div>
           <div className="space-y-1">
             {KEYBINDS.map((kb, i) => (
               kb.keys === "─" ? (
-                <div key={i} className="text-xs text-white/30 pt-1">{kb.label}</div>
+                <div key={i} className="text-xs pt-1" style={{ color: "rgba(255, 255, 255, 0.2)" }}>{kb.label}</div>
               ) : (
                 <div key={i} className="flex justify-between items-center text-sm">
-                  <span className="text-white/60">{kb.label}</span>
-                  <span className="text-xs font-mono bg-white/10 px-2 py-0.5 rounded text-white/50">{kb.keys}</span>
+                  <span style={{ color: "rgba(255, 255, 255, 0.4)" }}>{kb.label}</span>
+                  <span
+                    className="text-xs px-2 py-0.5 rounded"
+                    style={{ fontFamily: "'JetBrains Mono Variable', monospace", background: "rgba(255, 255, 255, 0.05)", color: "rgba(255, 255, 255, 0.3)" }}
+                  >
+                    {kb.keys}
+                  </span>
                 </div>
               )
             ))}

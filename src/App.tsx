@@ -1,3 +1,7 @@
+import "@fontsource/inter/400.css"
+import "@fontsource/inter/600.css"
+import "@fontsource/inter/700.css"
+import "@fontsource-variable/jetbrains-mono"
 import { ToastProvider } from "./components/ui/toast"
 import Queue from "./_pages/Queue"
 import { ToastViewport } from "@radix-ui/react-toast"
