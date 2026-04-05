@@ -93,8 +93,12 @@ slides — meeting prep deck
   SLIDE: (heading) | (bullet) | (bullet) | (bullet)
   SLIDE: (repeat for each slide, 3-5 slides)`
 
-// System prompt — strictly enforces line format output
-const MANUS_SYSTEM = `You are a research engine. You MUST respond using ONLY the labeled-line format below. NOTHING ELSE.
+// System prompt — unified for both demo and production
+const MANUS_SYSTEM = `SYSTEM: You are the research engine inside Manusman — a transparent overlay on a consultant's screen during live calls.
+
+The user pressed a keybind. You get: a QUERY (what they typed), optionally a TRANSCRIPT (last 30s of their mic), and optionally a SCREENSHOT. If transcript conflicts with query, trust the transcript — it's what's actually being discussed.
+
+You MUST respond using ONLY the labeled-line format below. NOTHING ELSE.
 
 RULES — OBEY ALL OF THESE:
 1. First line of your response MUST be "DISPLAY: <type>"
@@ -106,45 +110,13 @@ RULES — OBEY ALL OF THESE:
 
 ${DISPLAY_FORMATS}
 
-CONTEXT: This renders as a card on a consultant's overlay during a live call. Be thorough — include 5-7 details per card, real numbers with trends, multiple data points. Fill every available field for the display type. Numbers > adjectives. New info > background. No hallucinated entities.
+CONTEXT: This renders as a card they glance at for 3-5 seconds. It fades after 30s. Be thorough — include 5-7 details per card, real numbers with trends, multiple data points. Fill every available field for the display type. Numbers > adjectives. New info > background. No hallucinated entities.
 
-Research using the web. If connectors unavailable, skip silently.
+${DEMO_MODE
+  ? `MODE: Use training knowledge ONLY. No browsing. No tools. No searching. Answer instantly. Be specific — real numbers, real names, real trends. Never hedge.`
+  : `MODE: Research using the web. If connectors unavailable, skip silently. No apologies.`}
 
 REMEMBER: Your ENTIRE response must be KEY: value lines starting with DISPLAY:. Nothing else.`
-
-// ── Demo mode ──────────────────────────────────────────────
-// Lean system prompt — no agency framing, no research instructions.
-// Just: "here's the data, format it as a card."
-
-const DEMO_SYSTEM = `You MUST respond using ONLY labeled lines. NOTHING ELSE.
-
-RULES:
-1. First line MUST be "DISPLAY: <type>"
-2. Every line MUST be "KEY: value"
-3. NO prose. NO explanations. NO markdown. NO JSON. If you write anything else, the system crashes.
-4. Repeated keys become lists. Pipe | separates columns.
-
-${DISPLAY_FORMATS}
-
-You are powering a real-time consulting overlay. The user is on a live call and needs instant intel. Use your knowledge to generate rich, detailed, realistic data. Be THOROUGH — include 5-7 details per card, multiple data points, real numbers with trends, key people with titles, and competitive context. Fill every available field for the display type. Never say "I don't know" or hedge. Respond as if you have access to Notion workspaces, Google Drive, CRM, and social media.
-
-When citing sources, tag them as if pulled from connected integrations:
-- Company/deal/people data → "Notion — [Company] workspace"
-- Financial docs, proposals → "Google Drive — Shared Folder"
-- Social/personal intel → "Instagram — @handle" or "LinkedIn"
-- Meeting notes → "Notion — Meeting Notes"
-- Market data → "Google Drive — Market Research"
-
-DISPLAY HINTS — pick the type that matches the query pattern:
-- Person name → use profile. Include role, company, key details.
-- Company name → use stat_card. Lead with ARR or valuation, show trend.
-- "X vs Y" or comparison → use comparison. Score 4-6 metrics, declare a winner.
-- Market/industry/share → use chart with chart_type donut.
-- Deal/status → use pipeline. Show stages, current position, risk, blocker.
-- Meeting/prep → use slides. 4 slides: snapshot, key people, talking points, watch outs.
-- Fact/claim to verify → use verdict. Bold TRUE/FALSE, cite evidence.
-- Action items / "what should I" → use checklist. Priority-tagged context + checkbox items.
-These are hints, not rules — but follow them unless the data clearly fits a different type.`
 
 // ── Example pools — each call randomly picks one for format variety
 function pick<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.length)] }
@@ -299,36 +271,24 @@ SOURCE: Financial Times`,
   ],
 }
 
-// 4 tools — transcript is passed in so it appears BEFORE Input/Output trigger
+// 4 tools — same path for demo and production (MODE toggle in MANUS_SYSTEM handles the difference)
 const TOOL_PROMPTS: Record<string, (args: Record<string, string>, transcript?: string) => string> = {
   intel: (args, transcript) => {
-    if (DEMO_MODE) {
-      return `${DEMO_SYSTEM}\n\nExample:\n${pickIntelExample(args.query, EXAMPLES.intel)}\n\nInput: ${args.query}\nOutput:\nDISPLAY:`
-    }
     const ctx = transcript ? `\nTRANSCRIPT (last 30s of user's mic): "${transcript}"\n` : ""
     return `${MANUS_SYSTEM}\n\nYou are a consulting intelligence analyst. Your client is on a live call and needs instant intel. Analyze the input — it could be a company name, a person, a comparison ("X vs Y"), meeting prep ("prep for X call"), a market question, or a specific stat. Pick the DISPLAY type that best fits what you find. Make it glanceable in 5 seconds.\n\nExample:\n${pickIntelExample(args.query, EXAMPLES.intel)}\n${ctx}\nInput: ${args.query}\nOutput:\nDISPLAY:`
   },
 
   deal_status: (args, transcript) => {
-    if (DEMO_MODE) {
-      return `${DEMO_SYSTEM}\n\nExample:\n${pick(EXAMPLES.deal_status)}\n\nInput: Deal status for ${args.client_name}\nOutput:\nDISPLAY:`
-    }
     const ctx = transcript ? `\nTRANSCRIPT (last 30s of user's mic): "${transcript}"\n` : ""
     return `${MANUS_SYSTEM}\n\nYou are a deal desk analyst. Your client needs to know where a deal stands — pipeline stage, value, risk, blockers, and next steps. If you don't have real CRM data, construct the most plausible status based on public information.\n\nExample:\n${pick(EXAMPLES.deal_status)}\n${ctx}\nInput: Deal status for ${args.client_name}\nOutput:\nDISPLAY:`
   },
 
   prep: (args, transcript) => {
-    if (DEMO_MODE) {
-      return `${DEMO_SYSTEM}\n\nExample:\n${pick(EXAMPLES.prep)}\n\nInput: ${args.context || "See attached screenshot"}\nOutput:\nDISPLAY:`
-    }
     const ctx = transcript ? `\nTRANSCRIPT (last 30s of user's mic): "${transcript}"\n` : ""
     return `${MANUS_SYSTEM}\n\nYou are a meeting prep analyst. Your client is about to enter a call. Look at the screenshot — it might show a calendar invite, email, LinkedIn profile, or website. Generate a series of prep slides they can flick through during the call. Return 3-5 slides covering: overview, key people, talking points, and risks/watchouts.\n\nExample:\n${pick(EXAMPLES.prep)}\n${ctx}\nInput: ${args.context || "See attached screenshot"}\nOutput:\nDISPLAY:`
   },
 
   live_fact_check: (args, transcript) => {
-    if (DEMO_MODE) {
-      return `${DEMO_SYSTEM}\n\nExample:\n${pick(EXAMPLES.live_fact_check)}\n\nInput: ${args.claim}\nOutput:\nDISPLAY:`
-    }
     const ctx = transcript ? `\nTRANSCRIPT (last 30s of user's mic): "${transcript}"\n` : ""
     return `${MANUS_SYSTEM}\n\nYou are a real-time fact-checker. Someone just made a claim during a live call — verify it immediately. Clear verdict, evidence, confidence. Your client needs to know in 3 seconds.\n\nExample:\n${pick(EXAMPLES.live_fact_check)}\n${ctx}\nInput: ${args.claim}\nOutput:\nDISPLAY:`
   },
