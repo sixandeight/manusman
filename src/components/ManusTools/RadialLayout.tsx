@@ -175,11 +175,11 @@ const CardView: React.FC<{
           borderLeft: `3px solid ${color}`,
           borderRadius: "12px",
           boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
-          width: card.phase === "complete" ? (card.toolName === "prep" ? 620 : 560) : 340,
+          width: card.phase === "complete" ? (card.toolName === "prep" ? 744 : 672) : 408,
           transition: "width 400ms ease, border-color 400ms ease, box-shadow 400ms ease",
         }}
       >
-        <div className="flex items-center justify-between px-4 h-8 cursor-grab">
+        <div className="flex items-center justify-between px-5 h-10 cursor-grab">
           <div className="flex items-center gap-2">
             <span className="system-badge">{label}</span>
             {card.isAuto && (
@@ -190,18 +190,18 @@ const CardView: React.FC<{
         </div>
 
         {card.phase === "input" && (
-          <form onSubmit={submit} className="px-4 pb-3">
+          <form onSubmit={submit} className="px-5 pb-4">
             <input ref={inputRef} value={card.query}
               onChange={e => onQueryChange(card.id, e.target.value)}
               onKeyDown={e => { if (e.key === "Escape") onDismiss(card.id) }}
               placeholder={INPUT_PLACEHOLDERS[card.toolName]}
-              className="w-full px-3 py-2 text-sm text-white/90 bg-white/5 rounded-md border border-white/10 focus:outline-none focus:border-white/20 placeholder-white/30" />
+              className="w-full px-4 py-3 text-base text-white/90 bg-white/5 rounded-lg border border-white/10 focus:outline-none focus:border-white/20 placeholder-white/30" />
           </form>
         )}
 
         {(card.phase === "pending" || card.phase === "thinking") && (
-          <div className="px-4 pb-3">
-            {card.query && <div className="text-sm text-white/40 mb-2">{card.query}</div>}
+          <div className="px-5 pb-4">
+            {card.query && <div className="text-base text-white/40 mb-2">{card.query}</div>}
             <div className="flex items-center gap-3">
               <div className="flex-1 h-1 rounded-full bg-white/5 overflow-hidden">
                 <div className="h-full rounded-full" style={{
@@ -216,7 +216,7 @@ const CardView: React.FC<{
         )}
 
         {card.phase === "complete" && (
-          <div className="px-4 pb-4 pt-1">
+          <div className="px-5 pb-5 pt-2">
             {parsed?.display ? (
               <PresetRenderer data={parsed} color={color} />
             ) : (
@@ -294,7 +294,7 @@ const RadialLayout: React.FC<Props> = ({
       id, toolName: activeToolPrompt.toolName, needsScreenshot: activeToolPrompt.needsScreenshot,
       phase: "input", query: "", result: null, parsedResult: null,
     }))
-    physicsRef.current?.addNode(id, 340, 80)
+    physicsRef.current?.addNode(id, 408, 100)
     // Enable mouse events so the input can receive focus
     window.electronAPI.setIgnoreMouse(false)
     onToolCancel()
@@ -355,7 +355,7 @@ const RadialLayout: React.FC<Props> = ({
         const card = next.get(cardId)!
         const parsed = parseResultJSON(result.text, card.toolName)
         next.set(cardId, { ...card, phase: "complete", result, parsedResult: parsed })
-        physicsRef.current?.updateNodeSize(cardId, 560, 350)
+        physicsRef.current?.updateNodeSize(cardId, 672, 420)
         changed = true
       }
 
