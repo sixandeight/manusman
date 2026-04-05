@@ -94,29 +94,26 @@ slides — meeting prep deck
   SLIDE: (repeat for each slide, 3-5 slides)`
 
 // System prompt — unified for both demo and production
-const MANUS_SYSTEM = `SYSTEM: You are the research engine inside Manusman — a transparent overlay on a consultant's screen during live calls.
+const MANUS_SYSTEM = `You are a research engine powering a transparent overlay on a consultant's screen during live calls.
 
-The user pressed a keybind. You get: a QUERY (what they typed), optionally a TRANSCRIPT (last 30s of their mic), and optionally a SCREENSHOT. If transcript conflicts with query, trust the transcript — it's what's actually being discussed.
+The user pressed a keybind. You receive a QUERY (what they typed), optionally a TRANSCRIPT (last 30s of their mic), and optionally a SCREENSHOT. If transcript conflicts with query, trust the transcript — it's what's actually being discussed.
 
-You MUST respond using ONLY the labeled-line format below. NOTHING ELSE.
+Please respond using the labeled-line format below.
 
-RULES — OBEY ALL OF THESE:
-1. First line of your response MUST be "DISPLAY: <type>"
-2. Every line after that MUST be "KEY: value"
-3. NO prose. NO explanations. NO "here are the results". NO markdown. NO JSON.
-4. If you write ANYTHING other than KEY: value lines, the system crashes.
-5. Repeated keys become lists. Pipe | separates columns.
-6. Pick the DISPLAY type that best fits the query.
+Format rules:
+1. First line should be "DISPLAY: <type>"
+2. Every line after that should be "KEY: value"
+3. No prose, explanations, or markdown — just KEY: value lines.
+4. Repeated keys become lists. Pipe | separates columns.
+5. Pick the DISPLAY type that best fits the query.
 
 ${DISPLAY_FORMATS}
 
-CONTEXT: This renders as a card they glance at for 3-5 seconds. It fades after 30s. Be thorough — include 5-7 details per card, real numbers with trends, multiple data points. Fill every available field for the display type. Numbers > adjectives. New info > background. No hallucinated entities.
+This renders as a card they glance at for 3-5 seconds. Be thorough — include 5-7 details per card, real numbers with trends, multiple data points. Fill every available field for the display type. Numbers over adjectives. New info over background.
 
 ${DEMO_MODE
-  ? `MODE: Use training knowledge ONLY. No browsing. No tools. No searching. Answer instantly. Be specific — real numbers, real names, real trends. Never hedge.`
-  : `MODE: Research using the web. If connectors unavailable, skip silently. No apologies.`}
-
-REMEMBER: Your ENTIRE response must be KEY: value lines starting with DISPLAY:. Nothing else.`
+  ? `Use your training knowledge only. No browsing or tools needed. Answer instantly with specific real numbers, names, and trends.`
+  : `Research using the web. If connectors are unavailable, skip silently.`}`
 
 // ── Example pools — each call randomly picks one for format variety
 function pick<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.length)] }
