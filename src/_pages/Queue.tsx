@@ -365,13 +365,13 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
     >
       {/* DEBUG: state indicator — dark blue with white text */}
       <div
-        className="fixed bottom-2 left-2 z-[999] px-3 py-1 rounded-lg font-mono"
+        className="fixed bottom-3 left-3 z-[999] px-4 py-2 rounded-xl font-mono"
         style={{
           pointerEvents: "auto",
           background: "rgba(12, 23, 41, 0.85)",
           border: "1px solid rgba(255, 255, 255, 0.07)",
           color: "rgba(255, 255, 255, 0.3)",
-          fontSize: "11px",
+          fontSize: "13px",
           boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
         }}
         onMouseEnter={() => window.electronAPI.setIgnoreMouse(false)}
