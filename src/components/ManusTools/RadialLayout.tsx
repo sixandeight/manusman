@@ -168,22 +168,13 @@ const CardView: React.FC<{
       }}
     >
       <div
-        className="rounded-xl overflow-hidden"
+        className="overflow-hidden"
         style={{
-          background: "rgba(255, 255, 255, 0.15)",
-          backdropFilter: "blur(16px) saturate(180%) brightness(110%)",
-          WebkitBackdropFilter: "blur(16px) saturate(180%) brightness(110%)",
-          borderLeft: `3px solid ${
-            card.phase === "complete" ? "#16a34a" :
-            card.phase === "thinking" ? "#ca8a04" :
-            card.phase === "pending" ? "#aaa" :
-            color
-          }`,
-          boxShadow: card.phase === "thinking"
-            ? `0 4px 20px rgba(0,0,0,0.08), 0 0 8px rgba(202, 138, 4, 0.15)`
-            : card.phase === "complete"
-            ? `0 4px 20px rgba(0,0,0,0.08), 0 0 8px rgba(22, 163, 106, 0.15)`
-            : `0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.08)`,
+          background: "rgba(12, 23, 41, 0.85)",
+          border: "1px solid rgba(255, 255, 255, 0.07)",
+          borderLeft: `3px solid ${color}`,
+          borderRadius: "12px",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
           width: card.phase === "complete" ? (card.toolName === "prep" ? 620 : 560) : 340,
           transition: "width 400ms ease, border-color 400ms ease, box-shadow 400ms ease",
         }}
@@ -192,10 +183,10 @@ const CardView: React.FC<{
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color }}>{label}</span>
             {card.isAuto && (
-              <span className="text-[9px] font-medium uppercase px-1 py-0.5 rounded bg-black/5 text-black/40">auto</span>
+              <span className="text-[9px] font-medium uppercase px-1 py-0.5 rounded" style={{ background: "rgba(65, 105, 225, 0.12)", color: "#4169E1" }}>auto</span>
             )}
           </div>
-          <button onClick={() => onDismiss(card.id)} className="text-black/25 hover:text-black/50 text-xs leading-none">x</button>
+          <button onClick={() => onDismiss(card.id)} className="text-white/20 hover:text-white/40 text-xs leading-none">x</button>
         </div>
 
         {card.phase === "input" && (
@@ -204,22 +195,22 @@ const CardView: React.FC<{
               onChange={e => onQueryChange(card.id, e.target.value)}
               onKeyDown={e => { if (e.key === "Escape") onDismiss(card.id) }}
               placeholder={INPUT_PLACEHOLDERS[card.toolName]}
-              className="w-full px-3 py-2 text-sm text-black/80 bg-black/5 rounded-md border border-black/10 focus:outline-none focus:border-black/20 placeholder-black/30" />
+              className="w-full px-3 py-2 text-sm text-white/90 bg-white/5 rounded-md border border-white/10 focus:outline-none focus:border-white/20 placeholder-white/30" />
           </form>
         )}
 
         {(card.phase === "pending" || card.phase === "thinking") && (
           <div className="px-4 pb-3">
-            {card.query && <div className="text-sm text-black/50 mb-2">{card.query}</div>}
+            {card.query && <div className="text-sm text-white/40 mb-2">{card.query}</div>}
             <div className="flex items-center gap-3">
-              <div className="flex-1 h-1 rounded-full bg-black/10 overflow-hidden">
+              <div className="flex-1 h-1 rounded-full bg-white/5 overflow-hidden">
                 <div className="h-full rounded-full" style={{
                   background: `linear-gradient(90deg, transparent, ${color}88, transparent)`,
                   animation: `shimmer ${card.phase === "thinking" ? "1s" : "2.5s"} ease-in-out infinite`,
                   width: "100%",
                 }} />
               </div>
-              <span className="text-[10px] text-black/30">{phaseLabel}</span>
+              <span className="text-[10px] text-white/25">{phaseLabel}</span>
             </div>
           </div>
         )}
@@ -229,7 +220,7 @@ const CardView: React.FC<{
             {parsed?.display ? (
               <PresetRenderer data={parsed} color={color} />
             ) : (
-              <div className="text-sm text-black/60 leading-relaxed">
+              <div className="text-sm text-white/55 leading-relaxed">
                 {card.result?.text?.substring(0, 500)}
               </div>
             )}
@@ -437,10 +428,10 @@ const RadialLayout: React.FC<Props> = ({
               key={card.id}
               className="absolute"
               style={{ left: pos.x, top: pos.y, pointerEvents: "auto", zIndex: 50 }}
-              initial={{ opacity: 0, scale: 0.96, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96 }}
-              transition={{ type: "spring", stiffness: 100, damping: 18, mass: 2 }}
+              initial={{ opacity: 0, x: -16 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
               onMouseDown={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect()
                 if (e.clientY - rect.top > 32) return

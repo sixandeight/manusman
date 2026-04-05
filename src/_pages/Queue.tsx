@@ -368,11 +368,11 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
         className="fixed bottom-2 left-2 z-[999] px-3 py-1 rounded-lg font-mono"
         style={{
           pointerEvents: "auto",
-          background: "rgba(15, 30, 80, 0.85)",
-          border: "1px solid rgba(59, 130, 246, 0.3)",
-          color: "#ffffff",
+          background: "rgba(12, 23, 41, 0.85)",
+          border: "1px solid rgba(255, 255, 255, 0.07)",
+          color: "rgba(255, 255, 255, 0.3)",
           fontSize: "11px",
-          boxShadow: "0 2px 12px rgba(0, 0, 0, 0.15)",
+          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
         }}
         onMouseEnter={() => window.electronAPI.setIgnoreMouse(false)}
         onMouseLeave={() => window.electronAPI.setIgnoreMouse(true)}
@@ -382,15 +382,13 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
 
       {/* Command bar — top-left, glassmorphism */}
       <div
-        className="fixed top-0 left-0 z-50 px-2 py-1"
+        className="fixed top-3 left-3 z-50 px-2 py-1"
         style={{
           pointerEvents: "auto",
-          background: "linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04))",
-          border: "1px solid rgba(255, 255, 255, 0.35)",
-          borderTop: "1px solid rgba(255, 255, 255, 0.5)",
-          borderLeft: "1px solid rgba(255, 255, 255, 0.45)",
-          borderRadius: "0 0 16px 0",
-          boxShadow: "0 4px 30px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.3)",
+          background: "rgba(12, 23, 41, 0.85)",
+          border: "1px solid rgba(255, 255, 255, 0.07)",
+          borderRadius: "12px",
+          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
         }}
         onMouseEnter={() => window.electronAPI.setIgnoreMouse(false)}
         onMouseLeave={() => window.electronAPI.setIgnoreMouse(true)}
@@ -424,12 +422,12 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
             <div
               className="flex-1 overflow-y-auto mb-3 p-3 rounded-xl max-h-64 min-h-[120px]"
               style={{
-                background: "rgba(255, 255, 255, 0.06)",
-                border: "1px solid rgba(255, 255, 255, 0.2)",
+                background: "rgba(0, 0, 0, 0.2)",
+                border: "1px solid rgba(255, 255, 255, 0.07)",
               }}
             >
               {chatMessages.length === 0 ? (
-                <div className="text-base text-center mt-8" style={{ color: "rgba(30, 60, 100, 0.4)" }}>
+                <div className="text-base text-center mt-8" style={{ color: "rgba(255, 255, 255, 0.3)" }}>
                   Chat with {currentModel.provider === "ollama" ? "local" : "cloud"} {currentModel.model}
                 </div>
               ) : (
@@ -444,18 +442,14 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
                       }`}
                       style={{
                         background: msg.role === "user"
-                          ? "linear-gradient(145deg, rgba(59, 130, 246, 0.3), rgba(59, 130, 246, 0.12))"
-                          : "linear-gradient(145deg, rgba(147, 197, 253, 0.25), rgba(147, 197, 253, 0.08))",
+                          ? "rgba(65, 105, 225, 0.2)"
+                          : "rgba(255, 255, 255, 0.05)",
                         color: msg.role === "user"
-                          ? "rgba(10, 40, 90, 0.9)"
-                          : "rgba(10, 40, 90, 0.85)",
+                          ? "rgba(255, 255, 255, 0.85)"
+                          : "rgba(255, 255, 255, 0.7)",
                         border: msg.role === "user"
-                          ? "1px solid rgba(96, 165, 250, 0.35)"
-                          : "1px solid rgba(191, 219, 254, 0.4)",
-                        borderTop: msg.role === "user"
-                          ? "1px solid rgba(147, 197, 253, 0.45)"
-                          : "1px solid rgba(219, 234, 254, 0.5)",
-                        boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 2px 8px rgba(59, 130, 246, 0.08)",
+                          ? "1px solid rgba(65, 105, 225, 0.3)"
+                          : "1px solid rgba(255, 255, 255, 0.07)",
                         borderRadius: msg.role === "user"
                           ? "16px 16px 4px 16px"
                           : "16px 16px 16px 4px",
@@ -473,14 +467,13 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
                   <div
                     className="px-3 py-1.5 rounded-xl text-xs mr-12"
                     style={{
-                      background: "linear-gradient(145deg, rgba(147, 197, 253, 0.25), rgba(147, 197, 253, 0.08))",
-                      color: "rgba(10, 40, 90, 0.7)",
-                      border: "1px solid rgba(191, 219, 254, 0.4)",
-                      boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+                      background: "rgba(255, 255, 255, 0.05)",
+                      color: "rgba(255, 255, 255, 0.4)",
+                      border: "1px solid rgba(255, 255, 255, 0.07)",
                     }}
                   >
                     <span className="inline-flex items-center">
-                      <span className="animate-pulse" style={{ color: "rgba(59, 130, 246, 0.5)" }}>...</span>
+                      <span className="animate-pulse" style={{ color: "rgba(65, 105, 225, 0.5)" }}>...</span>
                       <span className="ml-2">{currentModel.model} is replying</span>
                     </span>
                   </div>
@@ -493,11 +486,11 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
             >
               <input
                 ref={chatInputRef}
-                className="flex-1 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-300/40"
+                className="flex-1 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-white/10"
                 style={{
-                  background: "rgba(255, 255, 255, 0.1)",
-                  border: "1px solid rgba(255, 255, 255, 0.3)",
-                  color: "rgba(10, 40, 90, 0.85)",
+                  background: "rgba(255, 255, 255, 0.05)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  color: "rgba(255, 255, 255, 0.85)",
                 }}
                 placeholder="Type your message..."
                 value={chatInput}
@@ -508,16 +501,14 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
                 type="submit"
                 className="p-2 rounded-lg flex items-center justify-center disabled:opacity-50"
                 style={{
-                  background: "linear-gradient(145deg, rgba(59, 130, 246, 0.25), rgba(59, 130, 246, 0.1))",
-                  border: "1px solid rgba(96, 165, 250, 0.35)",
-                  borderTop: "1px solid rgba(147, 197, 253, 0.45)",
-                  boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+                  background: "rgba(65, 105, 225, 0.2)",
+                  border: "1px solid rgba(65, 105, 225, 0.3)",
                 }}
                 disabled={chatLoading || !chatInput.trim()}
                 tabIndex={-1}
                 aria-label="Send"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="rgba(30, 60, 100, 0.6)" className="w-4 h-4">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="rgba(255, 255, 255, 0.6)" className="w-4 h-4">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-7.5-15-7.5v6l10 1.5-10 1.5v6z" />
                 </svg>
               </button>
