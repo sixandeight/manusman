@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manusman — Hackathon Pitch</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: linear-gradient(145deg, #c8e0f4 0%, #d6e6f8 25%, #e0daf4 55%, #d4e4f6 80%, #c2daf0 100%);
+    color: #1a2a3a;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  /* ── Deck / slide base ── */
+
+  .deck { position: relative; width: 100vw; height: 100vh; }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 100px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+  }
+
+  .slide.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* ── Glass ── */
+
+  .glass {
+    background: rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(100, 120, 160, 0.08);
+  }
+
+  /* ── Orb ── */
+
+  .orb {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  }
+
+  .orb-green  { background: rgba(134, 239, 172, 0.45); color: #166534; border: 1px solid rgba(134, 239, 172, 0.4); }
+  .orb-blue   { background: rgba(147, 197, 253, 0.45); color: #1e40af; border: 1px solid rgba(147, 197, 253, 0.4); }
+  .orb-purple { background: rgba(196, 181, 253, 0.45); color: #5b21b6; border: 1px solid rgba(196, 181, 253, 0.4); }
+  .orb-cyan   { background: rgba(103, 232, 249, 0.4);  color: #155e75; border: 1px solid rgba(103, 232, 249, 0.35); }
+  .orb-pink   { background: rgba(253, 164, 175, 0.4);  color: #9f1239; border: 1px solid rgba(253, 164, 175, 0.35); }
+  .orb-amber  { background: rgba(253, 224, 71, 0.35);  color: #92400e; border: 1px solid rgba(253, 224, 71, 0.3); }
+  .orb-white  { background: rgba(255, 255, 255, 0.5);  color: #3a4a5a; border: 1px solid rgba(255, 255, 255, 0.6); }
+
+  .orb-lg {
+    width: 80px;
+    height: 80px;
+    font-size: 13px;
+  }
+
+  /* ── Keyframes ── */
+
+  @keyframes pop-in {
+    0%   { transform: scale(0); opacity: 0; }
+    60%  { transform: scale(1.08); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+  }
+
+  @keyframes orbit {
+    0%   { transform: rotate(0deg) translateX(var(--orbit-r)) rotate(0deg); }
+    100% { transform: rotate(360deg) translateX(var(--orbit-r)) rotate(-360deg); }
+  }
+
+  @keyframes draw-down {
+    0%   { height: 0; }
+    100% { height: var(--line-h); }
+  }
+
+  @keyframes draw-right {
+    0%   { width: 0; }
+    100% { width: var(--line-w); }
+  }
+
+  @keyframes fade-up {
+    0%   { opacity: 0; transform: translateY(12px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes glow-warm {
+    0%, 100% { box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06); }
+    50%      { box-shadow: 0 4px 24px rgba(253, 224, 71, 0.3); }
+  }
+
+  /* ── Slide 1: Title + 3 orbs ── */
+
+  .s1-title {
+    font-size: 56px;
+    font-weight: 800;
+    color: #1a2a40;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+
+  .s1-tagline {
+    font-size: 18px;
+    font-weight: 400;
+    color: #6a7a8a;
+    margin-bottom: 56px;
+    text-align: center;
+  }
+
+  .s1-orbs {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 8px;
+  }
+
+  .s1-orb-wrap {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .s1-orb-label {
+    font-size: 17px;
+    font-weight: 500;
+    color: #2a3a4a;
+  }
+
+  /* ── Slide 2: Four tools orbiting ── */
+
+  .s2-title {
+    font-size: 36px;
+    font-weight: 700;
+    color: #1a2a40;
+    margin-bottom: 48px;
+    text-align: center;
+  }
+
+  .s2-orbit-area {
+    position: relative;
+    width: 460px;
+    height: 460px;
+  }
+
+  .s2-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: #8a9aaa;
+    box-shadow: 0 4px 20px rgba(100, 120, 160, 0.08);
+  }
+
+  .s2-tool {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .s2-tool-label {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a2a3a;
+  }
+
+  .s2-tool-desc {
+    font-size: 13px;
+    color: #5a6a7a;
+    text-align: center;
+    max-width: 140px;
+    line-height: 1.45;
+  }
+
+  .s2-tool-key {
+    font-family: 'SF Mono', 'Cascadia Code', monospace;
+    font-size: 10px;
+    color: #8a9aaa;
+    background: rgba(255, 255, 255, 0.4);
+    padding: 2px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+  }
+
+  /* positions: top, right, bottom, left */
+  .s2-tool:nth-child(2) { top: 0; left: 50%; transform: translateX(-50%); }
+  .s2-tool:nth-child(3) { right: 0; top: 50%; transform: translateY(-50%); }
+  .s2-tool:nth-child(4) { bottom: 0; left: 50%; transform: translateX(-50%); }
+  .s2-tool:nth-child(5) { left: 0; top: 50%; transform: translateY(-50%); }
+
+  /* ── Slide 3: Vertical flow ── */
+
+  .s3-title {
+    font-size: 36px;
+    font-weight: 700;
+    color: #1a2a40;
+    margin-bottom: 44px;
+    text-align: center;
+  }
+
+  .s3-flow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  .s3-node {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .s3-node-label {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a2a3a;
+  }
+
+  .s3-node-sub {
+    font-size: 14px;
+    color: #5a6a7a;
+    margin-top: 3px;
+  }
+
+  .s3-line {
+    width: 2px;
+    height: 48px;
+    background: rgba(130, 150, 180, 0.4);
+    margin: 10px 0 10px 31px;
+    border-radius: 1px;
+  }
+
+  .s3-footer {
+    margin-top: 36px;
+    padding: 12px 24px;
+    font-size: 14px;
+    color: #5a6a7a;
+    text-align: center;
+  }
+
+  .s3-footer strong {
+    color: #4a6090;
+    font-weight: 600;
+  }
+
+  /* ── Slide 4: Horizontal flow + close ── */
+
+  .s4-flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 48px;
+  }
+
+  .s4-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .s4-node-label {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a2a3a;
+    text-align: center;
+    max-width: 140px;
+  }
+
+  .s4-line {
+    width: 80px;
+    height: 2px;
+    background: rgba(130, 150, 180, 0.4);
+    margin: 0 16px;
+    border-radius: 1px;
+  }
+
+  .s4-close {
+    font-size: 26px;
+    font-weight: 700;
+    color: #1a2a40;
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  /* ── Nav ── */
+
+  .progress {
+    position: fixed;
+    bottom: 28px;
+    right: 32px;
+    display: flex;
+    gap: 8px;
+    z-index: 100;
+  }
+
+  .progress-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    transition: all 0.3s;
+    cursor: pointer;
+  }
+
+  .progress-dot.active {
+    background: rgba(107, 140, 206, 0.6);
+    border-color: rgba(107, 140, 206, 0.5);
+    width: 24px;
+    border-radius: 4px;
+  }
+
+  .nav-hint {
+    position: fixed;
+    bottom: 28px;
+    left: 32px;
+    font-family: 'SF Mono', 'Cascadia Code', monospace;
+    font-size: 11px;
+    color: #8a9aaa;
+    z-index: 100;
+  }
+
+  /* ── Ambient ── */
+
+  .blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.2;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .blob-1 { width: 500px; height: 500px; background: #a5b4fc; top: -150px; right: -100px; }
+  .blob-2 { width: 400px; height: 400px; background: #93c5fd; bottom: -120px; left: -80px; }
+  .blob-3 { width: 300px; height: 300px; background: #c4b5fd; top: 40%; left: 50%; transform: translate(-50%, -50%); }
+</style>
+</head>
+<body>
+
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div class="blob blob-3"></div>
+
+<div class="deck">
+
+  <!-- ═══ SLIDE 1: TITLE + 3 ORBS ═══ -->
+  <div class="slide active" data-slide="0">
+    <h1 class="s1-title">Manusman</h1>
+    <p class="s1-tagline">Real-time research, right on your screen.</p>
+    <div class="s1-orbs">
+      <div class="s1-orb-wrap">
+        <div class="orb orb-cyan">
+          <svg width="20" height="20" fill="none" stroke="#155e75" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18"/></svg>
+        </div>
+        <span class="s1-orb-label">Transparent overlay on any call</span>
+      </div>
+      <div class="s1-orb-wrap">
+        <div class="orb orb-purple">
+          <svg width="20" height="20" fill="none" stroke="#5b21b6" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M16 16l4.5 4.5"/></svg>
+        </div>
+        <span class="s1-orb-label">AI researches in real-time</span>
+      </div>
+      <div class="s1-orb-wrap">
+        <div class="orb orb-green">
+          <svg width="20" height="20" fill="none" stroke="#166534" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M8 10h8M8 14h5"/></svg>
+        </div>
+        <span class="s1-orb-label">Visual cards delivered to you</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 2: FOUR TOOLS ORBITING ═══ -->
+  <div class="slide" data-slide="1">
+    <h2 class="s2-title">Four tools, one overlay</h2>
+    <div class="s2-orbit-area">
+      <div class="s2-center">+</div>
+
+      <!-- Top: Intel -->
+      <div class="s2-tool">
+        <div class="orb orb-lg orb-green">intel</div>
+        <div class="s2-tool-label">Intel</div>
+        <div class="s2-tool-desc">Company research, people profiles, market data</div>
+        <div class="s2-tool-key">Ctrl + 1</div>
+      </div>
+
+      <!-- Right: Deal -->
+      <div class="s2-tool">
+        <div class="orb orb-lg orb-blue">deal</div>
+        <div class="s2-tool-label">Deal Status</div>
+        <div class="s2-tool-desc">Pipeline stage, risk, blockers</div>
+        <div class="s2-tool-key">Ctrl + 2</div>
+      </div>
+
+      <!-- Bottom: Prep -->
+      <div class="s2-tool">
+        <div class="orb orb-lg orb-purple">prep</div>
+        <div class="s2-tool-label">Meeting Prep</div>
+        <div class="s2-tool-desc">Screenshot to briefing slides</div>
+        <div class="s2-tool-key">Ctrl + 3</div>
+      </div>
+
+      <!-- Left: Fact -->
+      <div class="s2-tool">
+        <div class="orb orb-lg orb-pink">fact</div>
+        <div class="s2-tool-label">Fact Check</div>
+        <div class="s2-tool-desc">Verify claims live with confidence</div>
+        <div class="s2-tool-key">Ctrl + 4</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 3: VERTICAL FLOW ═══ -->
+  <div class="slide" data-slide="2">
+    <h2 class="s3-title">How it works</h2>
+    <div class="s3-flow">
+      <div class="s3-node">
+        <div class="orb orb-blue">
+          <svg width="20" height="20" fill="none" stroke="#1e40af" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.36-6.36l-1.42 1.42M7.05 16.95l-1.42 1.42m12.73 0l-1.42-1.42M7.05 7.05L5.63 5.63"/><circle cx="12" cy="12" r="4"/></svg>
+        </div>
+        <div>
+          <div class="s3-node-label">Hotkey or voice trigger</div>
+          <div class="s3-node-sub">Ctrl+1-4 or passive mic detection</div>
+        </div>
+      </div>
+
+      <div class="s3-line"></div>
+
+      <div class="s3-node">
+        <div class="orb orb-purple">
+          <svg width="20" height="20" fill="none" stroke="#5b21b6" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M16 16l4.5 4.5"/></svg>
+        </div>
+        <div>
+          <div class="s3-node-label">Manus AI researches</div>
+          <div class="s3-node-sub">Web search, cross-reference, structure</div>
+        </div>
+      </div>
+
+      <div class="s3-line"></div>
+
+      <div class="s3-node">
+        <div class="orb orb-green">
+          <svg width="20" height="20" fill="none" stroke="#166534" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M8 10h8M8 14h5"/></svg>
+        </div>
+        <div>
+          <div class="s3-node-label">Card appears on screen</div>
+          <div class="s3-node-sub">Chart, profile, verdict, or checklist</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="s3-footer glass">
+      Your mic is always transcribed — the AI hears <strong>what's being said</strong> in real time.
+    </div>
+  </div>
+
+  <!-- ═══ SLIDE 4: PASSIVE LISTENER + CLOSE ═══ -->
+  <div class="slide" data-slide="3">
+    <div class="s4-flow">
+      <div class="s4-node">
+        <div class="orb orb-cyan">
+          <svg width="20" height="20" fill="none" stroke="#155e75" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 1v4m0 14v4M8 5a4 4 0 018 0v6a4 4 0 01-8 0V5z"/><path d="M19 10v1a7 7 0 01-14 0v-1"/></svg>
+        </div>
+        <div class="s4-node-label">Mic hears "Stripe"</div>
+      </div>
+
+      <div class="s4-line"></div>
+
+      <div class="s4-node">
+        <div class="orb orb-purple">
+          <svg width="20" height="20" fill="none" stroke="#5b21b6" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9.5 2A6.5 6.5 0 0116 8.5c0 1.61-.59 3.09-1.56 4.23l5.33 5.33-1.42 1.42-5.33-5.33A6.47 6.47 0 019.5 15.5 6.5 6.5 0 013 9 6.5 6.5 0 019.5 2z"/></svg>
+        </div>
+        <div class="s4-node-label">AI detects entity</div>
+      </div>
+
+      <div class="s4-line"></div>
+
+      <div class="s4-node">
+        <div class="orb orb-amber">
+          <svg width="20" height="20" fill="none" stroke="#92400e" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M8 10h8M8 14h5"/></svg>
+        </div>
+        <div class="s4-node-label">Intel card appears</div>
+      </div>
+    </div>
+
+    <div class="s4-close">Your unfair advantage on every call.</div>
+  </div>
+
+</div>
+
+<!-- Nav -->
+<div class="progress" id="progress"></div>
+<div class="nav-hint">&larr; &rarr;</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  let current = 0;
+
+  // Allow ?slide=N for screenshots
+  const urlSlide = new URLSearchParams(window.location.search).get('slide');
+  if (urlSlide !== null) {
+    const n = parseInt(urlSlide);
+    if (n >= 0 && n < total) {
+      slides[0].classList.remove('active');
+      slides[n].classList.add('active');
+      current = n;
+    }
+  }
+
+  const progress = document.getElementById('progress');
+  for (let i = 0; i < total; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'progress-dot' + (i === 0 ? ' active' : '');
+    dot.addEventListener('click', () => goTo(i));
+    progress.appendChild(dot);
+  }
+
+  function goTo(n) {
+    if (n < 0 || n >= total || n === current) return;
+    slides[current].classList.remove('active');
+    current = n;
+    slides[current].classList.add('active');
+    document.querySelectorAll('.progress-dot').forEach((d, i) => {
+      d.classList.toggle('active', i === current);
+    });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(current - 1); }
+  });
+
+  let touchStartX = 0;
+  document.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
+  document.addEventListener('touchend', (e) => {
+    const diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) goTo(current + (diff > 0 ? 1 : -1));
+  });
+</script>
+
+</body>
+</html>

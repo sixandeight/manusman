@@ -1,0 +1,42 @@
+[
+  {
+    "label": "T1-A",
+    "latencyMs": 12200,
+    "validJson": true,
+    "hasDisplay": true,
+    "format": "chart",
+    "raw": "{\"display\":\"chart\",\"chart_type\":\"bar\",\"title\":\"Stripe Valuation ($B)\",\"datasets\":[{\"name\":\"Valuation\",\"values\":[20,36,95,50,65,91.5],\"color\":\"purple\"}],\"labels\":[\"2019\",\"2020\",\"2021\",\"2022\",\"2023\",\"2024\"],\"summary\":\"$91.5B valuation (2024 tender); $1T+ TPV; 50+ countries; profitable since 2023; IPO pending\"}"
+  },
+  {
+    "label": "T1-B",
+    "latencyMs": 27500,
+    "validJson": true,
+    "hasDisplay": true,
+    "format": "profile",
+    "raw": "{\"display\":\"profile\",\"name\":\"Stripe\",\"role\":\"Payments Infrastructure\",\"company\":\"Stripe\",\"details\":[\"Founded 2010 by Patrick & John Collison\",\"$65B valuation (2023 secondary markets)\",\"Processes hundreds of billions in payments annually\",\"Products: Payments, Connect, Billing, Radar, Treasury, Issuing\"],\"sentiment\":\"positive\",\"summary\":\"Dominant developer-first payments platform, IPO expected, expanding into financial infrastructure\"}"
+  },
+  {
+    "label": "T2-A",
+    "latencyMs": 11700,
+    "validJson": false,
+    "hasDisplay": false,
+    "format": null,
+    "raw": "{\"display\":\"comparison\",\"us_name\":\"Stripe\",\"them_name\":\"Industry Avg\",\"metrics\":[{\"label\":\"Domestic Card\",\"us_score\":6,\"them_score\":6},{\"label\":\"Intl Transaction Fee\",\"us_score\":5,\"them_score\":6},{\"label\":\"Currency Conversion\",\"us_score\":5,\"them_score\":6},{\"label\":\"API Quality\",\"us_score\":10,\"them_score\":5}],\"verdict\":\"Stripe leads on developer tools; pricier on international fees\"}"
+  },
+  {
+    "label": "T2-B",
+    "latencyMs": 11700,
+    "validJson": false,
+    "hasDisplay": false,
+    "format": null,
+    "raw": "{\"display\":\"comparison\",\"us_name\":\"Stripe\",\"them_name\":\"Industry Avg\",\"metrics\":[{\"label\":\"Domestic Card\",\"us_score\":7,\"them_score\":7},{\"label\":\"Intl Transaction Fee\",\"us_score\":5,\"them_score\":6},{\"label\":\"Currency Conversion\",\"us_score\":5,\"them_score\":6},{\"label\":\"API Quality\",\"us_score\":10,\"them_score\":5}],\"verdict\":\"Stripe developer experience unmatched; international fees are a known weakness\"}"
+  },
+  {
+    "label": "T3-A",
+    "latencyMs": 11800,
+    "validJson": true,
+    "hasDisplay": true,
+    "format": "profile",
+    "raw": "{\"display\":\"profile\",\"name\":\"Jensen Huang\",\"role\":\"Co-Founder & CEO\",\"company\":\"NVIDIA\",\"details\":[\"Founded NVIDIA in 1993 with Curtis Priem & Chris Malachowsky\",\"Born 1963, Taiwan; raised in US\",\"Net worth ~$100B+ (2025)\",\"Holds BS EE from Oregon State, MS EE from Stanford\",\"Known for signature black leather jacket\"],\"sentiment\":\"positive\",\"summary\":\"Visionary CEO who transformed NVIDIA from GPU maker to AI infrastructure giant; drives ~$3T market cap\"}"
+  }
+]

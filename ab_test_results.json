@@ -1,0 +1,762 @@
+[
+  {
+    "label": "T1_A_1",
+    "taskId": "8icKH34Xpuxd4jtiGsyEEr",
+    "totalTime": 17263,
+    "firstPartialTime": 7655,
+    "partialCount": 4,
+    "partials": [
+      {
+        "time": 7655,
+        "index": 0,
+        "status": "completed",
+        "text": ""
+      },
+      {
+        "time": 7655,
+        "index": 1,
+        "status": "completed",
+        "text": ""
+      },
+      {
+        "time": 10784,
+        "index": 2,
+        "status": "completed",
+        "text": "It seems like this is the start of our conversation, and I don't have any prior context or task to continue from. Could you please describe what you'd like me to work on? I'm ready to help as soon as you share the details."
+      },
+      {
+        "time": 17262,
+        "index": 3,
+        "status": "completed",
+        "text": "There is no prior task or context in our conversation for me to continue from. This appears to be the beginning of our session, so there is nothing to resume or complete.\n\nPlease share the details of what you'd like me to work on, and I'll get started right away."
+      }
+    ],
+    "finalText": "There is no prior task or context in our conversation for me to continue from. This appears to be the beginning of our session, so there is nothing to resume or complete.\n\nPlease share the details of what you'd like me to work on, and I'll get started right away.",
+    "validJson": false,
+    "displayFormat": null,
+    "parsedOutput": null,
+    "status": "completed"
+  },
+  {
+    "label": "T1_B_1",
+    "taskId": "394EPZ2ETAZikWJbqeLWUs",
+    "totalTime": 15935,
+    "firstPartialTime": 9685,
+    "partialCount": 4,
+    "partials": [
+      {
+        "time": 9685,
+        "index": 0,
+        "status": "completed",
+        "text": ""
+      },
+      {
+        "time": 9685,
+        "index": 1,
+        "status": "completed",
+        "text": ""
+      },
+      {
+        "time": 15935,
+        "index": 2,
+        "status": "completed",
+        "text": "{\"display\":\"profile\",\"name\":\"Stripe\",\"role\":\"Financial Technology\",\"company\":\"Stripe, Inc.\",\"details\":[\"Founded 2010 by Patrick and John Collison.\",\"Dual-headquartered in San Francisco and Dublin.\",\"$159B valuation (February 2026).\",\"Processes payments for companies like Google, Amazon, and Shopify.\"],\"sentiment\":\"positive\",\"summary\":\"A leading private fintech company, specializing in online payment processing, with significant recent growth in valuation.\"}"
+      },
+      {
+        "time": 15935,
+        "index": 3,
+        "status": "completed",
+        "text": "{\"display\":\"profile\",\"name\":\"Stripe\",\"role\":\"Payments Infrastructure\",\"company\":\"Stripe\",\"details\":[\"Founded 2010 by Patrick & John Collison\",\"Last valuation ~$65B (2023 secondary)\",\"Processes ~$1T+ in payments annually\",\"Products: Payments, Billing, Connect, Radar, Treasury, Issuing\",\"Operates in 46+ countries\",\"~8,000 employees\",\"Profitable as of 2023\"],\"sentiment\":\"positive\",\"summary\":\"Dominant B2B payments infra; strong enterprise & platform play; IPO still pending\"}"
+      }
+    ],
+    "finalText": "{\"display\":\"profile\",\"name\":\"Stripe\",\"role\":\"Payments Infrastructure\",\"company\":\"Stripe\",\"details\":[\"Founded 2010 by Patrick & John Collison\",\"Last valuation ~$65B (2023 secondary)\",\"Processes ~$1T+ in payments annually\",\"Products: Payments, Billing, Connect, Radar, Treasury, Issuing\",\"Operates in 46+ countries\",\"~8,000 employees\",\"Profitable as of 2023\"],\"sentiment\":\"positive\",\"summary\":\"Dominant B2B payments infra; strong enterprise & platform play; IPO still pending\"}",
+    "validJson": true,
+    "displayFormat": "profile",
+    "parsedOutput": {
+      "display": "profile",
+      "name": "Stripe",
+      "role": "Payments Infrastructure",
+      "company": "Stripe",
+      "details": [
+        "Founded 2010 by Patrick & John Collison",
+        "Last valuation ~$65B (2023 secondary)",
+        "Processes ~$1T+ in payments annually",
+        "Products: Payments, Billing, Connect, Radar, Treasury, Issuing",
+        "Operates in 46+ countries",
+        "~8,000 employees",
+        "Profitable as of 2023"
+      ],
+      "sentiment": "positive",
+      "summary": "Dominant B2B payments infra; strong enterprise & platform play; IPO still pending"
+    },
+    "status": "completed"
+  },
+  {
+    "label": "T1_A_2",
+    "taskId": "QaZZL9yq7Lej8dnUahZYZf",
+    "totalTime": 13154,
+    "firstPartialTime": 3776,
+    "partialCount": 2,
+    "partials": [
+      {
+        "time": 3776,
+        "index": 0,
+        "status": "completed",
+        "text": ""
+      },
+      {
+        "time": 13154,
+        "index": 1,
+        "status": "completed",
+        "text": "{\"display\":\"profile\",\"name\":\"Stripe\",\"role\":\"Private Fintech Company\",\"company\":\"Stripe, Inc.\",\"details\":[\"Founded 2010 by Patrick & John Collison\",\"HQ: San Francisco, CA\",\"Valuation: ~$65B (2024 secondary markets)\",\"Processes ~$1T+ in total payment volume annually\",\"3,000+ employees\",\"Products: Payments, Billing, Connect, Radar, Treasury, Issuing, Atlas\",\"Used by 100+ countries, millions of businesses\",\"Key clients: Amazon, Google, Shopify, OpenAI\",\"Last funding: Series I, 2023 at $50B valuation\"],\"sentiment\":\"positive\",\"summary\":\"Global payments infrastructure leader; dominant in developer-first B2B fintech; IPO repeatedly delayed but remains one of the most valuable private tech companies.\"}"
+      }
+    ],
+    "finalText": "{\"display\":\"profile\",\"name\":\"Stripe\",\"role\":\"Private Fintech Company\",\"company\":\"Stripe, Inc.\",\"details\":[\"Founded 2010 by Patrick & John Collison\",\"HQ: San Francisco, CA\",\"Valuation: ~$65B (2024 secondary markets)\",\"Processes ~$1T+ in total payment volume annually\",\"3,000+ employees\",\"Products: Payments, Billing, Connect, Radar, Treasury, Issuing, Atlas\",\"Used by 100+ countries, millions of businesses\",\"Key clients: Amazon, Google, Shopify, OpenAI\",\"Last funding: Series I, 2023 at $50B valuation\"],\"sentiment\":\"positive\",\"summary\":\"Global payments infrastructure leader; dominant in developer-first B2B fintech; IPO repeatedly delayed but remains one of the most valuable private tech companies.\"}",
+    "validJson": true,
+    "displayFormat": "profile",
+    "parsedOutput": {
+      "display": "profile",
+      "name": "Stripe",
+      "role": "Private Fintech Company",
+      "company": "Stripe, Inc.",
+      "details": [
+        "Founded 2010 by Patrick & John Collison",
+        "HQ: San Francisco, CA",
+        "Valuation: ~$65B (2024 secondary markets)",
+        "Processes ~$1T+ in total payment volume annually",
+        "3,000+ employees",
+        "Products: Payments, Billing, Connect, Radar, Treasury, Issuing, Atlas",
+        "Used by 100+ countries, millions of businesses",
+        "Key clients: Amazon, Google, Shopify, OpenAI",
+        "Last funding: Series I, 2023 at $50B valuation"
+      ],
+      "sentiment": "positive",
+      "summary": "Global payments infrastructure leader; dominant in developer-first B2B fintech; IPO repeatedly delayed but remains one of the most valuable private tech companies."
+    },
+    "status": "completed"
+  },
+  {
+    "label": "T1_B_2",
+    "taskId": "GTw9zMFo6BKhYgxnbmu3oP",
+    "totalTime": 18769,
+    "firstPartialTime": 12514,
+    "partialCount": 3,
+    "partials": [
+      {
+        "time": 12514,
+        "index": 0,
+        "status": "completed",
+        "text": ""
+      },
+      {
+        "time": 15645,
+        "index": 1,
+        "status": "completed",
+        "text": ""
+      },
+      {
+        "time": 18769,
+        "index": 2,
+        "status": "completed",
+        "text": "{\"display\":\"profile\",\"name\":\"Stripe\",\"role\":\"Payments Infrastructure\",\"company\":\"Stripe\",\"details\":[\"Founded 2010 by Patrick & John Collison\",\"$65B valuation (2023 internal)\",\"Processes hundreds of billions annually\",\"Products: Payments, Billing, Connect, Radar, Treasury\",\"140+ currencies, 195+ countries\",\"IPO long-anticipated, still private as of 2025\"],\"sentiment\":\"positive\",\"summary\":\"Global payments backbone for startups to enterprises; sticky infrastructure play with expanding financial services suite\"}"
+      }
+    ],
+    "finalText": "{\"display\":\"profile\",\"name\":\"Stripe\",\"role\":\"Payments Infrastructure\",\"company\":\"Stripe\",\"details\":[\"Founded 2010 by Patrick & John Collison\",\"$65B valuation (2023 internal)\",\"Processes hundreds of billions annually\",\"Products: Payments, Billing, Connect, Radar, Treasury\",\"140+ currencies, 195+ countries\",\"IPO long-anticipated, still private as of 2025\"],\"sentiment\":\"positive\",\"summary\":\"Global payments backbone for startups to enterprises; sticky infrastructure play with expanding financial services suite\"}",
+    "validJson": true,
+    "displayFormat": "profile",
+    "parsedOutput": {
+      "display": "profile",
+      "name": "Stripe",
+      "role": "Payments Infrastructure",
+      "company": "Stripe",
+      "details": [
+        "Founded 2010 by Patrick & John Collison",
+        "$65B valuation (2023 internal)",
+        "Processes hundreds of billions annually",
+        "Products: Payments, Billing, Connect, Radar, Treasury",
+        "140+ currencies, 195+ countries",
+        "IPO long-anticipated, still private as of 2025"
+      ],
+      "sentiment": "positive",
+      "summary": "Global payments backbone for startups to enterprises; sticky infrastructure play with expanding financial services suite"
+    },
+    "status": "completed"
+  },
+  {
+    "label": "T1_A_3",
+    "taskId": "3iRExSZygqREpXr9CAWLff",
+    "totalTime": 19313,
+    "firstPartialTime": 16186,
+    "partialCount": 4,
+    "partials": [
+      {
+        "time": 16186,
+        "index": 0,
+        "status": "completed",
+        "text": ""
+      },
+      {
+        "time": 16186,
+        "index": 1,
+        "status": "completed",
+        "text": ""
+      },
+      {
+        "time": 19313,
+        "index": 2,
+        "status": "completed",
+        "text": "```json\n{\"display\":\"profile\",\"name\":\"Stripe\",\"role\":\"Financial Infrastructure\",\"company\":\"Stripe, Inc.\",\"details\":[\"Founded in 2010. [1, 4, 6, 7, 8]\",\"Dual-headquartered in San Francisco and Dublin. [1, 6]\",\"Approximately 8,200-8,500 employees. [9, 12, 16, 19]\",\"Private company with a valuation of $159 billion as of February 2026. [2, 3, 5]\"],\"sentiment\":\"positive\",\"summary\":\"A leading global fintech company providing online payment processing and financial infrastructure for businesses of all sizes. [1, 13]\"}\n```"
+      },
+      {
+        "time": 19313,
+        "index": 3,
+        "status": "completed",
+        "text": "{\"display\":\"stat_card\",\"value\":\"$65B\",\"label\":\"Stripe Valuation (2024)\",\"sentiment\":\"positive\",\"trend\":[35,50,95,50,65],\"source\":\"Bloomberg / Stripe fundraise reports\",\"context\":\"Payments volume ~$1T/yr. Revenue est. $15B+ (2024). Profitable since 2023. IPO speculation ongoing. Operates in 50+ countries.\"}"
+      }
+    ],
+    "finalText": "{\"display\":\"stat_card\",\"value\":\"$65B\",\"label\":\"Stripe Valuation (2024)\",\"sentiment\":\"positive\",\"trend\":[35,50,95,50,65],\"source\":\"Bloomberg / Stripe fundraise reports\",\"context\":\"Payments volume ~$1T/yr. Revenue est. $15B+ (2024). Profitable since 2023. IPO speculation ongoing. Operates in 50+ countries.\"}",
+    "validJson": true,
+    "displayFormat": "stat_card",
+    "parsedOutput": {
+      "display": "stat_card",
+      "value": "$65B",
+      "label": "Stripe Valuation (2024)",
+      "sentiment": "positive",
+      "trend": [
+        35,
+        50,
+        95,
+        50,
+        65
+      ],
+      "source": "Bloomberg / Stripe fundraise reports",
+      "context": "Payments volume ~$1T/yr. Revenue est. $15B+ (2024). Profitable since 2023. IPO speculation ongoing. Operates in 50+ countries."
+    },
+    "status": "completed"
+  },
+  {
+    "label": "T1_B_3",
+    "taskId": "NZ9MfnZdBxocaRHzFjZ4ZT",
+    "totalTime": 12724,
+    "firstPartialTime": 6476,
+    "partialCount": 3,
+    "partials": [
+      {
+        "time": 6476,
+        "index": 0,
+        "status": "completed",
+        "text": ""
+      },
+      {
+        "time": 6476,
+        "index": 1,
+        "status": "completed",
+        "text": ""
+      },
+      {
+        "time": 12724,
+        "index": 2,
+        "status": "completed",
+        "text": "{\"display\":\"profile\",\"name\":\"Stripe\",\"role\":\"Payments Infrastructure\",\"company\":\"Stripe\",\"details\":[\"Founded 2010 by Patrick & John Collison\",\"$65B valuation (2023 internal tender)\",\"Processes hundreds of billions in payments annually\",\"Products: Payments, Connect, Billing, Treasury, Radar, Issuing\",\"HQ: San Francisco & Dublin\",\"~8,000 employees post-2023 layoffs\",\"Profitable on operating basis as of 2023\"],\"sentiment\":\"positive\",\"summary\":\"Dominant developer-first payments platform; IPO repeatedly delayed but remains top private fintech globally\"}"
+      }
+    ],
+    "finalText": "{\"display\":\"profile\",\"name\":\"Stripe\",\"role\":\"Payments Infrastructure\",\"company\":\"Stripe\",\"details\":[\"Founded 2010 by Patrick & John Collison\",\"$65B valuation (2023 internal tender)\",\"Processes hundreds of billions in payments annually\",\"Products: Payments, Connect, Billing, Treasury, Radar, Issuing\",\"HQ: San Francisco & Dublin\",\"~8,000 employees post-2023 layoffs\",\"Profitable on operating basis as of 2023\"],\"sentiment\":\"positive\",\"summary\":\"Dominant developer-first payments platform; IPO repeatedly delayed but remains top private fintech globally\"}",
+    "validJson": true,
+    "displayFormat": "profile",
+    "parsedOutput": {
+      "display": "profile",
+      "name": "Stripe",
+      "role": "Payments Infrastructure",
+      "company": "Stripe",
+      "details": [
+        "Founded 2010 by Patrick & John Collison",
+        "$65B valuation (2023 internal tender)",
+        "Processes hundreds of billions in payments annually",
+        "Products: Payments, Connect, Billing, Treasury, Radar, Issuing",
+        "HQ: San Francisco & Dublin",
+        "~8,000 employees post-2023 layoffs",
+        "Profitable on operating basis as of 2023"
+      ],
+      "sentiment": "positive",
+      "summary": "Dominant developer-first payments platform; IPO repeatedly delayed but remains top private fintech globally"
+    },
+    "status": "completed"
+  },
+  {
+    "label": "T2_A",
+    "taskId": "JdYHjfhipEucrqtdK4mc4R",
+    "totalTime": 36082,
+    "firstPartialTime": null,
+    "partialCount": 0,
+    "partials": [],
+    "finalText": "",
+    "validJson": false,
+    "displayFormat": null,
+    "parsedOutput": null,
+    "status": "completed"
+  },
+  {
+    "label": "T2_B",
+    "taskId": "Tts2kFx8NUvMbMev9QBEFx",
+    "totalTime": 57106,
+    "firstPartialTime": 34998,
+    "partialCount": 5,
+    "partials": [
+      {
+        "time": 34998,
+        "index": 0,
+        "status": "completed",
+        "text": ""
+      },
+      {
+        "time": 34998,
+        "index": 1,
+        "status": "completed",
+        "text": ""
+      },
+      {
+        "time": 34998,
+        "index": 2,
+        "status": "completed",
+        "text": ""
+      },
+      {
+        "time": 38113,
+        "index": 3,
+        "status": "completed",
+        "text": ""
+      },
+      {
+        "time": 47711,
+        "index": 4,
+        "status": "completed",
+        "text": "It seems this is the start of our conversation and there is no prior task context to continue from. Could you please describe what you'd like me to work on? I'm ready to help with any task."
+      }
+    ],
+    "finalText": "It seems this is the start of our conversation and there is no prior task context to continue from. Could you please describe what you'd like me to work on? I'm ready to help with any task.",
+    "validJson": false,
+    "displayFormat": null,
+    "parsedOutput": null,
+    "status": "completed"
+  },
+  {
+    "label": "T3_A",
+    "taskId": "NnQ3jS7KCp9NPSKskKtwCJ",
+    "totalTime": 73642,
+    "firstPartialTime": 35711,
+    "partialCount": 6,
+    "partials": [
+      {
+        "time": 35711,
+        "index": 0,
+        "status": "completed",
+        "text": ""
+      },
+      {
+        "time": 35711,
+        "index": 1,
+        "status": "completed",
+        "text": ""
+      },
+      {
+        "time": 35711,
+        "index": 2,
+        "status": "completed",
+        "text": ""
+      },
+      {
+        "time": 38832,
+        "index": 3,
+        "status": "completed",
+        "text": ""
+      },
+      {
+        "time": 48587,
+        "index": 4,
+        "status": "completed",
+        "text": "It seems there's no prior context or task in our current session. Could you please describe what you'd like me to work on? I'll get started right away without waiting for further input once I understand the task."
+      },
+      {
+        "time": 73641,
+        "index": 5,
+        "status": "completed",
+        "text": "There is no prior task or context in this session for me to continue from. Please describe the task you'd like me to complete, and I will proceed autonomously without waiting for further input."
+      }
+    ],
+    "finalText": "There is no prior task or context in this session for me to continue from. Please describe the task you'd like me to complete, and I will proceed autonomously without waiting for further input.",
+    "validJson": false,
+    "displayFormat": null,
+    "parsedOutput": null,
+    "status": "completed"
+  },
+  {
+    "label": "T3_B",
+    "taskId": "HHY46DZEj9sBhsQuekT8FE",
+    "totalTime": 12494,
+    "firstPartialTime": 9369,
+    "partialCount": 3,
+    "partials": [
+      {
+        "time": 9369,
+        "index": 0,
+        "status": "completed",
+        "text": ""
+      },
+      {
+        "time": 9369,
+        "index": 1,
+        "status": "completed",
+        "text": ""
+      },
+      {
+        "time": 12494,
+        "index": 2,
+        "status": "completed",
+        "text": "{\"display\":\"comparison\",\"us_name\":\"AWS\",\"them_name\":\"Azure\",\"metrics\":[{\"label\":\"Cloud Market Share\",\"us_score\":9,\"them_score\":7},{\"label\":\"Services Breadth\",\"us_score\":9,\"them_score\":8},{\"label\":\"Enterprise MS Integration\",\"us_score\":5,\"them_score\":10},{\"label\":\"AI/ML Tooling\",\"us_score\":8,\"them_score\">9},{\"label\":\"Pricing Competitiveness\",\"us_score\":7,\"them_score\":7},{\"label\":\"Global Regions\",\"us_score\":9,\"them_score\">8}],\"verdict\":\"AWS leads on market share (~31%) and breadth; Azure wins enterprise Microsoft shops and OpenAI integration\"}"
+      }
+    ],
+    "finalText": "{\"display\":\"comparison\",\"us_name\":\"AWS\",\"them_name\":\"Azure\",\"metrics\":[{\"label\":\"Cloud Market Share\",\"us_score\":9,\"them_score\":7},{\"label\":\"Services Breadth\",\"us_score\":9,\"them_score\":8},{\"label\":\"Enterprise MS Integration\",\"us_score\":5,\"them_score\":10},{\"label\":\"AI/ML Tooling\",\"us_score\":8,\"them_score\">9},{\"label\":\"Pricing Competitiveness\",\"us_score\":7,\"them_score\":7},{\"label\":\"Global Regions\",\"us_score\":9,\"them_score\">8}],\"verdict\":\"AWS leads on market share (~31%) and breadth; Azure wins enterprise Microsoft shops and OpenAI integration\"}",
+    "validJson": false,
+    "displayFormat": null,
+    "parsedOutput": null,
+    "status": "completed"
+  },
+  {
+    "label": "T4_A",
+    "taskId": "TmDAiAypCFDJDL8pP3fynA",
+    "totalTime": 22225,
+    "firstPartialTime": 6594,
+    "partialCount": 2,
+    "partials": [
+      {
+        "time": 6594,
+        "index": 0,
+        "status": "completed",
+        "text": ""
+      },
+      {
+        "time": 19084,
+        "index": 1,
+        "status": "completed",
+        "text": "{\"display\":\"checklist\",\"title\":\"Call Prep: Databricks\",\"subtitle\":\"Unified data + AI platform, ~$62B valuation (2024 raise)\",\"context\":[{\"text\":\"Raised $10B Series J at $62B valuation (Dec 2024) — largest private tech raise ever\",\"priority\":\"high\"},{\"text\":\"Acquired Tabular (Apache Iceberg co-creators) for ~$2B in 2024\",\"priority\":\"high\"},{\"text\":\"DBRX open-source LLM launched 2024; competing with GPT-4 class models\",\"priority\":\"medium\"},{\"text\":\"Unity Catalog now open-sourced — major governance push\",\"priority\":\"medium\"},{\"text\":\"IPO widely anticipated; no confirmed date\",\"priority\":\"medium\"}],\"items\":[{\"text\":\"Clarify workload: Spark/ETL, ML/AI, or BI (SQL Analytics)?\",\"checked\":false},{\"text\":\"Ask about current data lakehouse vs. warehouse split\",\"checked\":false},{\"text\":\"Probe Unity Catalog adoption and governance maturity\",\"checked\":false},{\"text\":\"Discuss Mosaic AI / model serving use cases\",\"checked\":false},{\"text\":\"Ask about cloud provider mix (AWS/Azure/GCP)\",\"checked\":false}]}"
+      }
+    ],
+    "finalText": "{\"display\":\"checklist\",\"title\":\"Call Prep: Databricks\",\"subtitle\":\"Unified data + AI platform, ~$62B valuation (2024 raise)\",\"context\":[{\"text\":\"Raised $10B Series J at $62B valuation (Dec 2024) — largest private tech raise ever\",\"priority\":\"high\"},{\"text\":\"Acquired Tabular (Apache Iceberg co-creators) for ~$2B in 2024\",\"priority\":\"high\"},{\"text\":\"DBRX open-source LLM launched 2024; competing with GPT-4 class models\",\"priority\":\"medium\"},{\"text\":\"Unity Catalog now open-sourced — major governance push\",\"priority\":\"medium\"},{\"text\":\"IPO widely anticipated; no confirmed date\",\"priority\":\"medium\"}],\"items\":[{\"text\":\"Clarify workload: Spark/ETL, ML/AI, or BI (SQL Analytics)?\",\"checked\":false},{\"text\":\"Ask about current data lakehouse vs. warehouse split\",\"checked\":false},{\"text\":\"Probe Unity Catalog adoption and governance maturity\",\"checked\":false},{\"text\":\"Discuss Mosaic AI / model serving use cases\",\"checked\":false},{\"text\":\"Ask about cloud provider mix (AWS/Azure/GCP)\",\"checked\":false}]}",
+    "validJson": true,
+    "displayFormat": "checklist",
+    "parsedOutput": {
+      "display": "checklist",
+      "title": "Call Prep: Databricks",
+      "subtitle": "Unified data + AI platform, ~$62B valuation (2024 raise)",
+      "context": [
+        {
+          "text": "Raised $10B Series J at $62B valuation (Dec 2024) — largest private tech raise ever",
+          "priority": "high"
+        },
+        {
+          "text": "Acquired Tabular (Apache Iceberg co-creators) for ~$2B in 2024",
+          "priority": "high"
+        },
+        {
+          "text": "DBRX open-source LLM launched 2024; competing with GPT-4 class models",
+          "priority": "medium"
+        },
+        {
+          "text": "Unity Catalog now open-sourced — major governance push",
+          "priority": "medium"
+        },
+        {
+          "text": "IPO widely anticipated; no confirmed date",
+          "priority": "medium"
+        }
+      ],
+      "items": [
+        {
+          "text": "Clarify workload: Spark/ETL, ML/AI, or BI (SQL Analytics)?",
+          "checked": false
+        },
+        {
+          "text": "Ask about current data lakehouse vs. warehouse split",
+          "checked": false
+        },
+        {
+          "text": "Probe Unity Catalog adoption and governance maturity",
+          "checked": false
+        },
+        {
+          "text": "Discuss Mosaic AI / model serving use cases",
+          "checked": false
+        },
+        {
+          "text": "Ask about cloud provider mix (AWS/Azure/GCP)",
+          "checked": false
+        }
+      ]
+    },
+    "status": "completed"
+  },
+  {
+    "label": "T4_B",
+    "taskId": "f4SMX7zmunjzYd7ncpbLKo",
+    "totalTime": 18931,
+    "firstPartialTime": 6455,
+    "partialCount": 3,
+    "partials": [
+      {
+        "time": 6455,
+        "index": 0,
+        "status": "completed",
+        "text": ""
+      },
+      {
+        "time": 6455,
+        "index": 1,
+        "status": "completed",
+        "text": ""
+      },
+      {
+        "time": 18931,
+        "index": 2,
+        "status": "completed",
+        "text": "{\"display\":\"checklist\",\"title\":\"Databricks Call Brief\",\"context\":[{\"text\":\"Founded 2013 by Apache Spark creators (UC Berkeley AMPLab); HQ San Francisco\",\"priority\":\"high\"},{\"text\":\"Valuation: $62B (Dec 2024 Series J, $10B raised)\",\"priority\":\"high\"},{\"text\":\"Core products: Lakehouse Platform, Delta Lake, MLflow, Unity Catalog\",\"priority\":\"high\"},{\"text\":\"FY2024 ARR: ~$1.6B, growing ~50% YoY\",\"priority\":\"high\"},{\"text\":\"CEO: Ali Ghodsi (co-founder); ~6,000 employees\",\"priority\":\"medium\"},{\"text\":\"Key competitors: Snowflake, Google BigQuery, AWS Glue/Redshift\",\"priority\":\"medium\"},{\"text\":\"2023 acq: MosaicML ($1.3B) — signals strong LLM/AI training push\",\"priority\":\"medium\"},{\"text\":\"Customers: Apple, Comcast, Condé Nast, Shell, Walgreens\",\"priority\":\"low\"}],\"items\":[{\"text\":\"Ask about their current data stack — Spark-native or migrating?\",\"checked\":false},{\"text\":\"Probe on Snowflake displacement — common competitive angle\",\"checked\":false},{\"text\":\"Discuss AI/ML workloads — MosaicML integration is a differentiator\",\"checked\":false},{\"text\":\"Unity Catalog GA'd 2023 — governance pain points?\",\"checked\":false},{\"text\":\"Pricing model: DBU (Databricks Units) consumption-based — confirm budget scope\",\"checked\":false}]}"
+      }
+    ],
+    "finalText": "{\"display\":\"checklist\",\"title\":\"Databricks Call Brief\",\"context\":[{\"text\":\"Founded 2013 by Apache Spark creators (UC Berkeley AMPLab); HQ San Francisco\",\"priority\":\"high\"},{\"text\":\"Valuation: $62B (Dec 2024 Series J, $10B raised)\",\"priority\":\"high\"},{\"text\":\"Core products: Lakehouse Platform, Delta Lake, MLflow, Unity Catalog\",\"priority\":\"high\"},{\"text\":\"FY2024 ARR: ~$1.6B, growing ~50% YoY\",\"priority\":\"high\"},{\"text\":\"CEO: Ali Ghodsi (co-founder); ~6,000 employees\",\"priority\":\"medium\"},{\"text\":\"Key competitors: Snowflake, Google BigQuery, AWS Glue/Redshift\",\"priority\":\"medium\"},{\"text\":\"2023 acq: MosaicML ($1.3B) — signals strong LLM/AI training push\",\"priority\":\"medium\"},{\"text\":\"Customers: Apple, Comcast, Condé Nast, Shell, Walgreens\",\"priority\":\"low\"}],\"items\":[{\"text\":\"Ask about their current data stack — Spark-native or migrating?\",\"checked\":false},{\"text\":\"Probe on Snowflake displacement — common competitive angle\",\"checked\":false},{\"text\":\"Discuss AI/ML workloads — MosaicML integration is a differentiator\",\"checked\":false},{\"text\":\"Unity Catalog GA'd 2023 — governance pain points?\",\"checked\":false},{\"text\":\"Pricing model: DBU (Databricks Units) consumption-based — confirm budget scope\",\"checked\":false}]}",
+    "validJson": true,
+    "displayFormat": "checklist",
+    "parsedOutput": {
+      "display": "checklist",
+      "title": "Databricks Call Brief",
+      "context": [
+        {
+          "text": "Founded 2013 by Apache Spark creators (UC Berkeley AMPLab); HQ San Francisco",
+          "priority": "high"
+        },
+        {
+          "text": "Valuation: $62B (Dec 2024 Series J, $10B raised)",
+          "priority": "high"
+        },
+        {
+          "text": "Core products: Lakehouse Platform, Delta Lake, MLflow, Unity Catalog",
+          "priority": "high"
+        },
+        {
+          "text": "FY2024 ARR: ~$1.6B, growing ~50% YoY",
+          "priority": "high"
+        },
+        {
+          "text": "CEO: Ali Ghodsi (co-founder); ~6,000 employees",
+          "priority": "medium"
+        },
+        {
+          "text": "Key competitors: Snowflake, Google BigQuery, AWS Glue/Redshift",
+          "priority": "medium"
+        },
+        {
+          "text": "2023 acq: MosaicML ($1.3B) — signals strong LLM/AI training push",
+          "priority": "medium"
+        },
+        {
+          "text": "Customers: Apple, Comcast, Condé Nast, Shell, Walgreens",
+          "priority": "low"
+        }
+      ],
+      "items": [
+        {
+          "text": "Ask about their current data stack — Spark-native or migrating?",
+          "checked": false
+        },
+        {
+          "text": "Probe on Snowflake displacement — common competitive angle",
+          "checked": false
+        },
+        {
+          "text": "Discuss AI/ML workloads — MosaicML integration is a differentiator",
+          "checked": false
+        },
+        {
+          "text": "Unity Catalog GA'd 2023 — governance pain points?",
+          "checked": false
+        },
+        {
+          "text": "Pricing model: DBU (Databricks Units) consumption-based — confirm budget scope",
+          "checked": false
+        }
+      ]
+    },
+    "status": "completed"
+  },
+  {
+    "label": "T5_A",
+    "taskId": "3c8hTAgBZN9sRyP37zRy2D",
+    "totalTime": 10254,
+    "firstPartialTime": 4007,
+    "partialCount": 2,
+    "partials": [
+      {
+        "time": 4007,
+        "index": 0,
+        "status": "completed",
+        "text": ""
+      },
+      {
+        "time": 10253,
+        "index": 1,
+        "status": "completed",
+        "text": "{\"display\":\"profile\",\"name\":\"Notion\",\"role\":\"Productivity & Collaboration SaaS\",\"company\":\"Notion Labs, Inc.\",\"details\":[\"Founded 2016, HQ San Francisco\",\"~$10B valuation (Series C, 2021, $275M raised)\",\"All-in-one workspace: docs, wikis, databases, projects\",\"~4M+ paying users, 30M+ total users\",\"Strong enterprise push since 2022 (Notion AI, SCIM, SSO)\",\"Japan is one of Notion's largest non-US markets — localized app, JP team in place\",\"Competitors: Confluence, Coda, Airtable, Monday.com\"],\"sentiment\":\"positive\",\"summary\":\"Series C stage, Japan already a strategic priority with localized presence — strong cultural fit angle for expansion pitch\"}"
+      }
+    ],
+    "finalText": "{\"display\":\"profile\",\"name\":\"Notion\",\"role\":\"Productivity & Collaboration SaaS\",\"company\":\"Notion Labs, Inc.\",\"details\":[\"Founded 2016, HQ San Francisco\",\"~$10B valuation (Series C, 2021, $275M raised)\",\"All-in-one workspace: docs, wikis, databases, projects\",\"~4M+ paying users, 30M+ total users\",\"Strong enterprise push since 2022 (Notion AI, SCIM, SSO)\",\"Japan is one of Notion's largest non-US markets — localized app, JP team in place\",\"Competitors: Confluence, Coda, Airtable, Monday.com\"],\"sentiment\":\"positive\",\"summary\":\"Series C stage, Japan already a strategic priority with localized presence — strong cultural fit angle for expansion pitch\"}",
+    "validJson": true,
+    "displayFormat": "profile",
+    "parsedOutput": {
+      "display": "profile",
+      "name": "Notion",
+      "role": "Productivity & Collaboration SaaS",
+      "company": "Notion Labs, Inc.",
+      "details": [
+        "Founded 2016, HQ San Francisco",
+        "~$10B valuation (Series C, 2021, $275M raised)",
+        "All-in-one workspace: docs, wikis, databases, projects",
+        "~4M+ paying users, 30M+ total users",
+        "Strong enterprise push since 2022 (Notion AI, SCIM, SSO)",
+        "Japan is one of Notion's largest non-US markets — localized app, JP team in place",
+        "Competitors: Confluence, Coda, Airtable, Monday.com"
+      ],
+      "sentiment": "positive",
+      "summary": "Series C stage, Japan already a strategic priority with localized presence — strong cultural fit angle for expansion pitch"
+    },
+    "status": "completed"
+  },
+  {
+    "label": "T5_B",
+    "taskId": "LCWgoCy34v86T3XmLWttYd",
+    "totalTime": 12783,
+    "firstPartialTime": 3408,
+    "partialCount": 2,
+    "partials": [
+      {
+        "time": 3408,
+        "index": 0,
+        "status": "completed",
+        "text": ""
+      },
+      {
+        "time": 9657,
+        "index": 1,
+        "status": "completed",
+        "text": "{\"display\":\"profile\",\"name\":\"Notion\",\"role\":\"Productivity & Collaboration Platform\",\"company\":\"Notion Labs Inc.\",\"details\":[\"Founded 2013, relaunched 2018\",\"$10B valuation (Series C, Oct 2021, $275M raised)\",\"~$150M ARR est. 2023\",\"30M+ users globally\",\"HQ: San Francisco\",\"Investors: Sequoia, Index, Coatue\",\"Expanding enterprise & international markets incl. Japan (Tokyo office opened 2022)\"],\"sentiment\":\"positive\",\"summary\":\"Series C stage; Japan expansion is active — Tokyo office live since 2022, localized product. Strong enterprise push. Competitor: Confluence, Coda, Microsoft Loop.\"}"
+      }
+    ],
+    "finalText": "{\"display\":\"profile\",\"name\":\"Notion\",\"role\":\"Productivity & Collaboration Platform\",\"company\":\"Notion Labs Inc.\",\"details\":[\"Founded 2013, relaunched 2018\",\"$10B valuation (Series C, Oct 2021, $275M raised)\",\"~$150M ARR est. 2023\",\"30M+ users globally\",\"HQ: San Francisco\",\"Investors: Sequoia, Index, Coatue\",\"Expanding enterprise & international markets incl. Japan (Tokyo office opened 2022)\"],\"sentiment\":\"positive\",\"summary\":\"Series C stage; Japan expansion is active — Tokyo office live since 2022, localized product. Strong enterprise push. Competitor: Confluence, Coda, Microsoft Loop.\"}",
+    "validJson": true,
+    "displayFormat": "profile",
+    "parsedOutput": {
+      "display": "profile",
+      "name": "Notion",
+      "role": "Productivity & Collaboration Platform",
+      "company": "Notion Labs Inc.",
+      "details": [
+        "Founded 2013, relaunched 2018",
+        "$10B valuation (Series C, Oct 2021, $275M raised)",
+        "~$150M ARR est. 2023",
+        "30M+ users globally",
+        "HQ: San Francisco",
+        "Investors: Sequoia, Index, Coatue",
+        "Expanding enterprise & international markets incl. Japan (Tokyo office opened 2022)"
+      ],
+      "sentiment": "positive",
+      "summary": "Series C stage; Japan expansion is active — Tokyo office live since 2022, localized product. Strong enterprise push. Competitor: Confluence, Coda, Microsoft Loop."
+    },
+    "status": "completed"
+  },
+  {
+    "label": "T6_A",
+    "taskId": "83E88QZytKwyi2xzM9ZH76",
+    "totalTime": 6472,
+    "firstPartialTime": 3353,
+    "partialCount": 2,
+    "partials": [
+      {
+        "time": 3353,
+        "index": 0,
+        "status": "completed",
+        "text": ""
+      },
+      {
+        "time": 6472,
+        "index": 1,
+        "status": "completed",
+        "text": "{\"display\":\"chart\",\"chart_type\":\"bar\",\"title\":\"Global AI Market Size (USD Billions)\",\"datasets\":[{\"name\":\"Market Size\",\"values\":[95,142,207,299,454],\"color\":\"blue\"}],\"labels\":[\"2021\",\"2022\",\"2023\",\"2024\",\"2025e\"]}"
+      }
+    ],
+    "finalText": "{\"display\":\"chart\",\"chart_type\":\"bar\",\"title\":\"Global AI Market Size (USD Billions)\",\"datasets\":[{\"name\":\"Market Size\",\"values\":[95,142,207,299,454],\"color\":\"blue\"}],\"labels\":[\"2021\",\"2022\",\"2023\",\"2024\",\"2025e\"]}",
+    "validJson": true,
+    "displayFormat": "chart",
+    "parsedOutput": {
+      "display": "chart",
+      "chart_type": "bar",
+      "title": "Global AI Market Size (USD Billions)",
+      "datasets": [
+        {
+          "name": "Market Size",
+          "values": [
+            95,
+            142,
+            207,
+            299,
+            454
+          ],
+          "color": "blue"
+        }
+      ],
+      "labels": [
+        "2021",
+        "2022",
+        "2023",
+        "2024",
+        "2025e"
+      ]
+    },
+    "status": "completed"
+  },
+  {
+    "label": "T6_B",
+    "taskId": "h4rwUcqwGgDLsERuRyBf25",
+    "totalTime": 9782,
+    "firstPartialTime": 3534,
+    "partialCount": 2,
+    "partials": [
+      {
+        "time": 3534,
+        "index": 0,
+        "status": "completed",
+        "text": ""
+      },
+      {
+        "time": 9782,
+        "index": 1,
+        "status": "completed",
+        "text": "{\"display\":\"stat_card\",\"value\":\"$638B\",\"label\":\"Global AI Market (2024 Est.)\",\"sentiment\":\"positive\",\"trend\":[93,142,207,310,638],\"source\":\"IDC / Grand View Research\"}"
+      }
+    ],
+    "finalText": "{\"display\":\"stat_card\",\"value\":\"$638B\",\"label\":\"Global AI Market (2024 Est.)\",\"sentiment\":\"positive\",\"trend\":[93,142,207,310,638],\"source\":\"IDC / Grand View Research\"}",
+    "validJson": true,
+    "displayFormat": "stat_card",
+    "parsedOutput": {
+      "display": "stat_card",
+      "value": "$638B",
+      "label": "Global AI Market (2024 Est.)",
+      "sentiment": "positive",
+      "trend": [
+        93,
+        142,
+        207,
+        310,
+        638
+      ],
+      "source": "IDC / Grand View Research"
+    },
+    "status": "completed"
+  }
+]

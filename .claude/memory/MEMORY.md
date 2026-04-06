@@ -1,0 +1,1 @@
+- [Demo Mode Setup](demo_mode.md) — Rex Corp scenario, DEMO_MODE=true, Notion import files in demo-notion/, demo script for all 8 card types
